@@ -1,20 +1,20 @@
 # Production Readiness Checklist
 
 ## Project Setup
-- [ ] Use only Python 3.11+ for all development and production environments
-- [ ] Initialize a new git repository for version control
-- [ ] Set up Python environment management using `uv` exclusively (no venv, no pip)
-- [ ] Add a `pyproject.toml` for project metadata and tool configuration
-- [ ] Configure code quality tools: black (formatting), ruff (linting), and mypy (type checking)
-- [ ] Set up pre-commit hooks to enforce code standards before every commit
-- [ ] Write a clear and concise `README.md` with setup, usage, and contribution instructions
+- [x] Use only Python 3.11+ for all development and production environments
+- [x] Initialize a new git repository for version control
+- [x] Set up Python environment management using `uv` exclusively (no venv, no pip)
+- [x] Add a `pyproject.toml` for project metadata and tool configuration
+- [x] Configure code quality tools: black (formatting), ruff (linting), and mypy (type checking)
+- [x] Set up pre-commit hooks to enforce code standards before every commit
+- [x] Write a clear and concise `README.md` with setup, usage, and contribution instructions
 
 ## CLI Framework
-- [ ] Select a modern TUI framework (Textual or Rich) for the CLI interface
-- [ ] Define a robust application state model for managing UI and logic
-- [ ] Design a clear screen routing/navigation model for all app flows
-- [ ] Implement the main event loop to handle user input and state updates
-- [ ] Ensure clean exit handling to restore terminal state on quit
+- [x] Select a modern TUI framework (Textual or Rich) for the CLI interface
+- [x] Define a robust application state model for managing UI and logic
+- [x] Design a clear screen routing/navigation model for all app flows
+- [x] Implement the main event loop to handle user input and state updates
+- [x] Ensure clean exit handling to restore terminal state on quit
 
 ## ADB Layer
 - [ ] Create a dedicated module to wrap all adb command interactions
