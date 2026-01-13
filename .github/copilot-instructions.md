@@ -53,4 +53,4 @@ Workflow
 - Write code only for the selected task
 - Write and run all tests for the task
 - Update checklist.md to mark task done
-- Commit changes
+- Commit changes (logical commits per task)

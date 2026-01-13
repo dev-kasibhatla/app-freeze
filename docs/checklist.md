@@ -17,19 +17,19 @@
 - [x] Ensure clean exit handling to restore terminal state on quit
 
 ## ADB Layer
-- [ ] Create a dedicated module to wrap all adb command interactions
-- [ ] Detect adb tool availability and provide actionable error if missing
-- [ ] Detect all connected Android devices reliably
-- [ ] Handle scenarios with multiple connected devices
+- [x] Create a dedicated module to wrap all adb command interactions
+- [x] Detect adb tool availability and provide actionable error if missing
+- [x] Detect all connected Android devices reliably
+- [x] Handle scenarios with multiple connected devices
 - [ ] Support device selection by user when multiple devices are present
-- [ ] Capture both stdout and stderr from adb commands robustly
-- [ ] Add timeout handling for all adb operations to prevent hangs
-- [ ] Define and use structured error types for all adb failures
+- [x] Capture both stdout and stderr from adb commands robustly
+- [x] Add timeout handling for all adb operations to prevent hangs
+- [x] Define and use structured error types for all adb failures
 
 ## Device Discovery
-- [ ] Fetch device ID for each connected device
-- [ ] Fetch model name, manufacturer, Android version, and SDK level
-- [ ] Cache device info to avoid redundant adb calls
+- [x] Fetch device ID for each connected device
+- [x] Fetch model name, manufacturer, Android version, and SDK level
+- [x] Cache device info to avoid redundant adb calls
 
 ## App Discovery
 - [ ] List all installed packages on the device
