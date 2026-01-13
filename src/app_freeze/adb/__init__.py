@@ -8,7 +8,7 @@ from app_freeze.adb.errors import (
     ADBNotFoundError,
     ADBTimeoutError,
 )
-from app_freeze.adb.models import DeviceInfo, DeviceState
+from app_freeze.adb.models import AppInfo, DeviceInfo, DeviceState
 
 __all__ = [
     "ADBClient",
@@ -19,4 +19,5 @@ __all__ = [
     "ADBDeviceNotFoundError",
     "DeviceInfo",
     "DeviceState",
+    "AppInfo",
 ]

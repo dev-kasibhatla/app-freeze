@@ -273,3 +273,62 @@ class TestADBClientListUsers:
         with patch("subprocess.run", return_value=mock_result):
             users = client.list_users("device123")
             assert users == [0, 10]
+
+
+class TestADBClientListPackages:
+    """Tests for ADBClient.list_packages."""
+
+    @pytest.fixture
+    def client(self) -> ADBClient:
+        return ADBClient(adb_path="/usr/bin/adb")
+
+    def test_system_and_user_apps(self, client: ADBClient) -> None:
+        call_log: list[list[str]] = []
+
+        system_result = MagicMock()
+        system_result.returncode = 0
+        system_result.stdout = "package:com.android.settings\npackage:com.android.nfc\n"
+        system_result.stderr = ""
+
+        user_result = MagicMock()
+        user_result.returncode = 0
+        user_result.stdout = "package:com.example.app\npackage:com.test.app\n"
+        user_result.stderr = ""
+
+        def mock_run(cmd: list[str], **kwargs: object) -> MagicMock:
+            call_log.append(cmd)
+            # System packages: adb -s device123 shell pm list packages -s
+            # User packages: adb -s device123 shell pm list packages -3
+            if "-3" in cmd:
+                return user_result
+            else:
+                return system_result
+
+        with patch("subprocess.run", side_effect=mock_run):
+            packages = client.list_packages("device123")
+            # Should have called twice: once for -s and once for -3
+            assert len(call_log) == 2
+            assert len(packages) == 4
+            assert "com.android.settings" in packages
+            assert "com.example.app" in packages
+            assert packages == sorted(packages)
+
+    def test_system_apps_only(self, client: ADBClient) -> None:
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = "package:com.android.settings\n"
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            packages = client.list_packages("device123", system_apps=True, user_apps=False)
+            assert packages == ["com.android.settings"]
+
+    def test_user_apps_only(self, client: ADBClient) -> None:
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = "package:com.example.app\n"
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            packages = client.list_packages("device123", system_apps=False, user_apps=True)
+            assert packages == ["com.example.app"]

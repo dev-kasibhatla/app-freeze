@@ -89,3 +89,104 @@ class TestADBIntegration:
         # Force refresh should still work
         info3 = client.get_device_info(device_id, force_refresh=True)
         assert info3.device_id == device_id
+
+
+class TestAppDiscoveryIntegration:
+    """Integration tests for app discovery with real devices."""
+
+    def test_list_packages(self, client: ADBClient) -> None:
+        """List packages on connected device."""
+        devices = client.list_devices()
+        if not devices or not devices[0].is_ready:
+            pytest.skip("No ready devices available")
+
+        device_id = devices[0].device_id
+
+        # Get all packages
+        packages = client.list_packages(device_id)
+        print(f"\nTotal packages: {len(packages)}")
+        assert len(packages) > 0
+
+        # Get system packages only
+        system_packages = client.list_packages(device_id, system_apps=True, user_apps=False)
+        print(f"System packages: {len(system_packages)}")
+        assert len(system_packages) > 0
+
+        # Get user packages only
+        user_packages = client.list_packages(device_id, system_apps=False, user_apps=True)
+        print(f"User packages: {len(user_packages)}")
+
+        # Should be sorted
+        assert packages == sorted(packages)
+
+    def test_get_app_info(self, client: ADBClient) -> None:
+        """Get detailed info for a specific app."""
+        devices = client.list_devices()
+        if not devices or not devices[0].is_ready:
+            pytest.skip("No ready devices available")
+
+        device_id = devices[0].device_id
+        packages = client.list_packages(device_id, system_apps=True, user_apps=False)
+
+        if not packages:
+            pytest.skip("No packages found")
+
+        # Get info for first system app
+        package = packages[0]
+        app_info = client.get_app_info(device_id, package, fetch_size=False)
+
+        print(f"\nApp: {package}")
+        print(f"  Display name: {app_info.display_name}")
+        print(f"  System: {app_info.is_system}")
+        print(f"  Enabled: {app_info.is_enabled}")
+        print(f"  Version: {app_info.version_code}")
+
+        assert app_info.package_name == package
+        assert isinstance(app_info.is_system, bool)
+        assert isinstance(app_info.is_enabled, bool)
+
+    def test_list_apps_without_sizes(self, client: ADBClient) -> None:
+        """List apps without fetching sizes (faster)."""
+        devices = client.list_devices()
+        if not devices or not devices[0].is_ready:
+            pytest.skip("No ready devices available")
+
+        device_id = devices[0].device_id
+
+        # Get first 10 apps without sizes
+        all_packages = client.list_packages(device_id)
+        packages_subset = all_packages[:10]
+
+        apps = []
+        for pkg in packages_subset:
+            try:
+                app = client.get_app_info(device_id, pkg, fetch_size=False)
+                apps.append(app)
+            except Exception:
+                continue
+
+        print(f"\nFetched info for {len(apps)} apps")
+        for app in apps[:5]:
+            print(f"  {app.package_name}: enabled={app.is_enabled}, system={app.is_system}")
+
+        assert len(apps) > 0
+
+    def test_app_size_fetching(self, client: ADBClient) -> None:
+        """Test fetching app size (slower operation)."""
+        devices = client.list_devices()
+        if not devices or not devices[0].is_ready:
+            pytest.skip("No ready devices available")
+
+        device_id = devices[0].device_id
+        packages = client.list_packages(device_id, system_apps=False, user_apps=True)
+
+        if not packages:
+            # Try system apps if no user apps
+            packages = client.list_packages(device_id, system_apps=True, user_apps=False)
+
+        if packages:
+            # Get size for one app
+            package = packages[0]
+            app_info = client.get_app_info(device_id, package, fetch_size=True)
+            print(f"\n{package} size: {app_info.size_mb} MB")
+            assert app_info.size_mb >= 0.0

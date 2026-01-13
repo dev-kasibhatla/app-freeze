@@ -10,8 +10,15 @@ from app_freeze.adb.errors import (
     ADBNotFoundError,
     ADBTimeoutError,
 )
-from app_freeze.adb.models import DeviceCache, DeviceInfo
-from app_freeze.adb.parser import parse_devices_output, parse_users_output
+from app_freeze.adb.models import AppInfo, DeviceCache, DeviceInfo
+from app_freeze.adb.parser import (
+    parse_devices_output,
+    parse_du_output,
+    parse_dumpsys_package,
+    parse_package_path,
+    parse_packages_output,
+    parse_users_output,
+)
 
 DEFAULT_TIMEOUT: Final[float] = 30.0
 PROP_TIMEOUT: Final[float] = 5.0
@@ -219,3 +226,148 @@ class ADBClient:
             self._cache.invalidate(device_id)
         else:
             self._cache.clear()
+
+    def list_packages(
+        self,
+        device_id: str,
+        system_apps: bool = True,
+        user_apps: bool = True,
+    ) -> list[str]:
+        """
+        List installed packages on the device.
+
+        Args:
+            device_id: Target device ID.
+            system_apps: Include system apps.
+            user_apps: Include third-party (user) apps.
+
+        Returns:
+            List of package names.
+        """
+        packages: set[str] = set()
+
+        if system_apps:
+            stdout, _ = self._run(["shell", "pm", "list", "packages", "-s"], device_id=device_id)
+            packages.update(parse_packages_output(stdout))
+
+        if user_apps:
+            stdout, _ = self._run(["shell", "pm", "list", "packages", "-3"], device_id=device_id)
+            packages.update(parse_packages_output(stdout))
+
+        return sorted(packages)
+
+    def get_app_info(
+        self,
+        device_id: str,
+        package_name: str,
+        user_id: int = 0,
+        fetch_size: bool = False,
+    ) -> AppInfo:
+        """
+        Get detailed information about a specific app.
+
+        Args:
+            device_id: Target device ID.
+            package_name: Package name to query.
+            user_id: User ID for app state check.
+            fetch_size: If True, fetch app size (slower).
+
+        Returns:
+            App information.
+        """
+        # Determine if it's a system app
+        is_system = self._is_system_app(device_id, package_name)
+
+        # Get enabled state and version code via dumpsys
+        dumpsys_stdout, _ = self._run(
+            ["shell", "dumpsys", "package", package_name],
+            device_id=device_id,
+            timeout=10.0,
+        )
+        metadata = parse_dumpsys_package(dumpsys_stdout, user_id)
+        is_enabled = bool(metadata.get("enabled", True))
+        version_code = int(metadata.get("version_code", 0))
+
+        # Optionally get app size
+        size_mb = 0.0
+        if fetch_size:
+            size_mb = self._get_app_size(device_id, package_name)
+
+        return AppInfo(
+            package_name=package_name,
+            is_system=is_system,
+            is_enabled=is_enabled,
+            size_mb=size_mb,
+            version_code=version_code,
+        )
+
+    def list_apps(
+        self,
+        device_id: str,
+        user_id: int = 0,
+        include_system: bool = True,
+        include_user: bool = True,
+        fetch_sizes: bool = False,
+    ) -> list[AppInfo]:
+        """
+        List all apps on the device with detailed information.
+
+        Args:
+            device_id: Target device ID.
+            user_id: User ID for app state check.
+            include_system: Include system apps.
+            include_user: Include third-party apps.
+            fetch_sizes: If True, fetch app sizes (much slower).
+
+        Returns:
+            Sorted list of app information.
+        """
+        packages = self.list_packages(device_id, include_system, include_user)
+        apps: list[AppInfo] = []
+
+        for package in packages:
+            try:
+                app_info = self.get_app_info(device_id, package, user_id, fetch_sizes)
+                apps.append(app_info)
+            except (ADBCommandError, ADBTimeoutError):
+                # Skip apps that fail to query
+                continue
+
+        # Sort alphabetically by package name
+        return sorted(apps, key=lambda a: a.package_name.lower())
+
+    def _is_system_app(self, device_id: str, package_name: str) -> bool:
+        """Check if a package is a system app."""
+        try:
+            stdout, _ = self._run(
+                ["shell", "pm", "list", "packages", "-s", package_name],
+                device_id=device_id,
+                timeout=PROP_TIMEOUT,
+            )
+            # If the package appears in system apps list, it's a system app
+            return f"package:{package_name}" in stdout
+        except (ADBCommandError, ADBTimeoutError):
+            return False
+
+    def _get_app_size(self, device_id: str, package_name: str) -> float:
+        """Get app size in MB."""
+        try:
+            # Get package path
+            path_stdout, _ = self._run(
+                ["shell", "pm", "path", package_name],
+                device_id=device_id,
+                timeout=PROP_TIMEOUT,
+            )
+            app_dir = parse_package_path(path_stdout)
+            if not app_dir:
+                return 0.0
+
+            # Get directory size
+            size_stdout, _ = self._run(
+                ["shell", "du", "-sh", app_dir],
+                device_id=device_id,
+                timeout=10.0,
+            )
+            return parse_du_output(size_stdout)
+        except (ADBCommandError, ADBTimeoutError):
+            return 0.0

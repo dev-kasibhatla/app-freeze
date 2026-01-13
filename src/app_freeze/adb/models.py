@@ -44,6 +44,24 @@ class DeviceInfo:
         return self.device_id
 
 
+@dataclass(frozen=True)
+class AppInfo:
+    """Android application information."""
+
+    package_name: str
+    is_system: bool
+    is_enabled: bool
+    size_mb: float = 0.0
+    version_code: int = 0
+
+    @property
+    def display_name(self) -> str:
+        """Human-readable app name from package."""
+        # Extract readable name from package (e.g., com.android.chrome -> Chrome)
+        parts = self.package_name.split(".")
+        return parts[-1].replace("_", " ").title()
+
+
 @dataclass
 class DeviceCache:
     """Cache for device information to avoid redundant adb calls."""

@@ -2,7 +2,7 @@
 
 import pytest
 
-from app_freeze.adb.models import DeviceCache, DeviceInfo, DeviceState
+from app_freeze.adb.models import AppInfo, DeviceCache, DeviceInfo, DeviceState
 
 
 class TestDeviceState:
@@ -118,3 +118,43 @@ class TestDeviceCache:
         cache.clear()
         assert cache.get("test1") is None
         assert cache.get("test2") is None
+
+
+class TestAppInfo:
+    """Tests for AppInfo dataclass."""
+
+    def test_basic_creation(self) -> None:
+        app = AppInfo(package_name="com.example.app", is_system=False, is_enabled=True)
+        assert app.package_name == "com.example.app"
+        assert app.is_system is False
+        assert app.is_enabled is True
+        assert app.size_mb == 0.0
+        assert app.version_code == 0
+
+    def test_full_creation(self) -> None:
+        app = AppInfo(
+            package_name="com.android.chrome",
+            is_system=False,
+            is_enabled=True,
+            size_mb=25.5,
+            version_code=725815837,
+        )
+        assert app.size_mb == 25.5
+        assert app.version_code == 725815837
+
+    def test_display_name_simple(self) -> None:
+        app = AppInfo(package_name="com.example.testapp", is_system=False, is_enabled=True)
+        assert app.display_name == "Testapp"
+
+    def test_display_name_with_underscores(self) -> None:
+        app = AppInfo(package_name="com.example.my_test_app", is_system=False, is_enabled=True)
+        assert app.display_name == "My Test App"
+
+    def test_display_name_single_word(self) -> None:
+        app = AppInfo(package_name="chrome", is_system=False, is_enabled=True)
+        assert app.display_name == "Chrome"
+
+    def test_frozen(self) -> None:
+        app = AppInfo(package_name="test", is_system=False, is_enabled=True)
+        with pytest.raises(AttributeError):
+            app.package_name = "changed"  # type: ignore[misc]

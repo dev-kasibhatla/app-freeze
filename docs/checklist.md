@@ -32,12 +32,12 @@
 - [x] Cache device info to avoid redundant adb calls
 
 ## App Discovery
-- [ ] List all installed packages on the device
-- [ ] Identify and separate user apps from system apps
-- [ ] Fetch enabled/disabled state for each app
-- [ ] Fetch app size in MB for reporting
-- [ ] Normalize and validate all package metadata
-- [ ] Sort app list alphabetically for display
+- [x] List all installed packages on the device
+- [x] Identify and separate user apps from system apps
+- [x] Fetch enabled/disabled state for each app
+- [x] Fetch app size in MB for reporting
+- [x] Normalize and validate all package metadata
+- [x] Sort app list alphabetically for display
 
 ## UI Core
 - [ ] Build the main page layout for app selection and actions
@@ -93,13 +93,13 @@
 - [ ] Ensure deterministic formatting for all reports
 
 ## Testing
-- [ ] Write unit tests for adb wrapper module
-- [ ] Write unit tests for all parsing logic
+- [x] Write unit tests for adb wrapper module
+- [x] Write unit tests for all parsing logic
 - [ ] Write unit tests for state transitions
 - [ ] Write snapshot tests for UI components
-- [ ] Write integration tests with mocked adb
-- [ ] Test multiple device scenarios
-- [ ] Test failure scenarios (adb errors, permission errors, etc)
+- [x] Write integration tests with mocked adb
+- [x] Test multiple device scenarios
+- [x] Test failure scenarios (adb errors, permission errors, etc)
 
 ## Reliability
 - [ ] Handle adb disconnects gracefully and inform the user
