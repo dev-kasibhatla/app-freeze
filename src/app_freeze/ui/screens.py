@@ -148,9 +148,10 @@ class DeviceScreen(Screen[DeviceInfo]):
             yield Label("📱 Select Device", classes="title")
             yield Label("Choose a connected Android device", classes="subtitle")
             if self._devices:
-                with ListView(id="device-list"):
-                    for device in self._devices:
-                        yield DeviceItem(device)
+                yield ListView(
+                    *[DeviceItem(device) for device in self._devices],
+                    id="device-list",
+                )
                 yield Label("↑↓ Navigate • Enter Select • r Refresh • q Quit", classes="hint")
             else:
                 yield Label("No devices connected", classes="no-devices")
