@@ -85,10 +85,10 @@ if [ -f "dist/app-freeze" ]; then
     # Make executable
     chmod +x dist/app-freeze
     
-    # Test the binary
+    # Test the binary (with timeout since it's a TUI app)
     print_info "Testing binary..."
-    if dist/app-freeze --help &> /dev/null || true; then
-        print_info "Binary appears to work!"
+    if timeout 1s dist/app-freeze &> /dev/null || [ $? -eq 124 ]; then
+        print_info "Binary executable verified!"
     else
         print_warn "Binary test had issues, but may still work"
     fi
