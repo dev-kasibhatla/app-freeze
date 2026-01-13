@@ -122,8 +122,11 @@ class AppFreezeApp(App[None]):
 
     def _show_error(self, title: str, message: str) -> None:
         """Show an error message."""
-        container = self.query_one("#loading-container", Container)
-        container.remove()
+        try:
+            container = self.query_one("#loading-container", Container)
+            container.remove()
+        except Exception:
+            pass  # Loading container may not exist
 
         error_container = Container(id="error-container")
         error_container.mount(
@@ -168,9 +171,12 @@ class AppFreezeApp(App[None]):
                 await self._on_device_selected(detailed_devices[0])
             else:
                 # Show device selection screen
-                device = await self.push_screen_wait(DeviceScreen(detailed_devices))
-                if device:
-                    await self._on_device_selected(device)
+                def on_device_screen_result(device: DeviceInfo | None) -> None:
+                    """Handle device selection result."""
+                    if device:
+                        self.call_later(self._on_device_selected, device)
+                
+                self.push_screen(DeviceScreen(detailed_devices), on_device_screen_result)
         except ADBDeviceDisconnectedError as e:
             self._show_error("Device Disconnected", str(e))
         except ADBPermissionError as e:

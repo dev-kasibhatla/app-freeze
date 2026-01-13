@@ -444,7 +444,7 @@ class ADBClient:
                 timeout=10.0,
             )
             return parse_du_output(size_stdout)
-        except (ADBCommandError, ADBTimeoutError):
+        except (ADBCommandError, ADBTimeoutError, ADBPermissionError):
             return 0.0
 
     def disable_app(
