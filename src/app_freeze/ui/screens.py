@@ -42,7 +42,7 @@ class DeviceItem(ListItem):
     }
 
     DeviceItem:hover {
-        background: $surface-light;
+        background: $surface;
     }
 
     DeviceItem.--highlight {
@@ -222,7 +222,7 @@ class AppListScreen(Screen[tuple[set[str], AppAction]]):
 
     AppListScreen > .app-list-header {
         height: 2;
-        background: $surface-light;
+        background: $surface;
         padding: 0 1;
         margin: 0 2;
     }

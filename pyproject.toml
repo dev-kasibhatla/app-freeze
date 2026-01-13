@@ -8,6 +8,8 @@ dependencies = [
     "textual>=0.47.0",
 ]
 
+license = { text = "GPL-3.0-or-later" }
+
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4.0",

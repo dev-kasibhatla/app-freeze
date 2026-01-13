@@ -1,5 +1,7 @@
 # Production Readiness Checklist
 
+- [x] Add GPLv3 license and reference in documentation
+
 ## Project Setup
 - [x] Use only Python 3.11+ for all development and production environments
 - [x] Initialize a new git repository for version control

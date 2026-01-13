@@ -1,6 +1,14 @@
 # App Freeze
 
+![GPLv3 License](https://img.shields.io/badge/License-GPLv3-blue.svg)
+
+
 A safe, modern TUI (Terminal User Interface) tool to manage Android app states via ADB. Enable and disable Android apps across all users with an intuitive keyboard-driven interface, without uninstalling or clearing any data.
+
+
+## License
+
+This project is licensed under the terms of the GNU General Public License v3.0. See the [LICENSE](LICENSE) file for details.
 
 ## Features
 
