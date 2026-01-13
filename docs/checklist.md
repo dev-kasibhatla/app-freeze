@@ -109,17 +109,17 @@
 - [x] Always cleanup and restore terminal state on exit
 
 ## Packaging
-- [ ] Configure PyInstaller spec to use uv as the Python environment
-- [ ] Produce a single, non-reversible binary for macOS and Linux (no source extraction possible)
+- [x] Configure PyInstaller spec to use uv as the Python environment
+- [x] Produce a single, non-reversible binary for macOS and Linux (no source extraction possible)
 - [ ] Test the binary on a clean system (no Python installed)
 - [ ] Verify that no Python dependency is required to run the binary
 - [ ] Validate that startup time is fast and user experience is smooth
 
 ## Documentation
-- [ ] Write clear usage instructions for all features
-- [ ] Write a keybindings reference for all supported shortcuts
-- [ ] Document all safety guarantees (no destructive actions without confirmation)
-- [ ] Document known limitations and edge cases
+- [x] Write clear usage instructions for all features
+- [x] Write a keybindings reference for all supported shortcuts
+- [x] Document all safety guarantees (no destructive actions without confirmation)
+- [x] Document known limitations and edge cases
 
 ## CI
 - [ ] Add lint checks to CI pipeline
