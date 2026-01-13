@@ -332,3 +332,149 @@ class TestADBClientListPackages:
         with patch("subprocess.run", return_value=mock_result):
             packages = client.list_packages("device123", system_apps=False, user_apps=True)
             assert packages == ["com.example.app"]
+
+
+class TestADBClientDeviceSelection:
+    """Tests for device selection functionality."""
+
+    @pytest.fixture
+    def client(self) -> ADBClient:
+        return ADBClient(adb_path="/usr/bin/adb")
+
+    def test_get_ready_devices_all_ready(self, client: ADBClient) -> None:
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = """List of devices attached
+device1          device product:prod1 model:Model_1 transport_id:1
+device2          device product:prod2 model:Model_2 transport_id:2
+"""
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            ready = client.get_ready_devices()
+            assert len(ready) == 2
+            assert all(d.is_ready for d in ready)
+
+    def test_get_ready_devices_filtered(self, client: ADBClient) -> None:
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = """List of devices attached
+device1          device product:prod1 model:Model_1 transport_id:1
+device2          offline
+device3          unauthorized
+"""
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            ready = client.get_ready_devices()
+            assert len(ready) == 1
+            assert ready[0].device_id == "device1"
+
+    def test_get_ready_devices_none(self, client: ADBClient) -> None:
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = """List of devices attached
+device1          offline
+device2          unauthorized
+"""
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            ready = client.get_ready_devices()
+            assert len(ready) == 0
+
+    def test_validate_device_exists_and_ready(self, client: ADBClient) -> None:
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = """List of devices attached
+device1          device product:prod1 model:Model_1 transport_id:1
+"""
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            device = client.validate_device("device1")
+            assert device.device_id == "device1"
+            assert device.is_ready
+
+    def test_validate_device_not_found(self, client: ADBClient) -> None:
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = """List of devices attached
+device1          device product:prod1 model:Model_1 transport_id:1
+"""
+        mock_result.stderr = ""
+
+        with (
+            patch("subprocess.run", return_value=mock_result),
+            pytest.raises(ADBDeviceNotFoundError),
+        ):
+            client.validate_device("nonexistent")
+
+    def test_validate_device_not_ready(self, client: ADBClient) -> None:
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = """List of devices attached
+device1          offline
+"""
+        mock_result.stderr = ""
+
+        with (
+            patch("subprocess.run", return_value=mock_result),
+            pytest.raises(ADBDeviceNotFoundError),
+        ):
+            client.validate_device("device1")
+
+    def test_select_device_explicit(self, client: ADBClient) -> None:
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = """List of devices attached
+device1          device product:prod1 model:Model_1 transport_id:1
+device2          device product:prod2 model:Model_2 transport_id:2
+"""
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            device = client.select_device("device1")
+            assert device.device_id == "device1"
+
+    def test_select_device_auto_single(self, client: ADBClient) -> None:
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = """List of devices attached
+device1          device product:prod1 model:Model_1 transport_id:1
+"""
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            device = client.select_device()
+            assert device.device_id == "device1"
+
+    def test_select_device_multiple_no_selection(self, client: ADBClient) -> None:
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = """List of devices attached
+device1          device product:prod1 model:Model_1 transport_id:1
+device2          device product:prod2 model:Model_2 transport_id:2
+"""
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            with pytest.raises(ADBDeviceNotFoundError) as exc_info:
+                client.select_device()
+            assert "Multiple devices available" in str(exc_info.value)
+            assert "device1" in str(exc_info.value)
+            assert "device2" in str(exc_info.value)
+
+    def test_select_device_no_ready(self, client: ADBClient) -> None:
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = """List of devices attached
+device1          offline
+device2          unauthorized
+"""
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            with pytest.raises(ADBDeviceNotFoundError) as exc_info:
+                client.select_device()
+            assert "No ready devices available" in str(exc_info.value)

@@ -21,7 +21,7 @@
 - [x] Detect adb tool availability and provide actionable error if missing
 - [x] Detect all connected Android devices reliably
 - [x] Handle scenarios with multiple connected devices
-- [ ] Support device selection by user when multiple devices are present
+- [x] Support device selection by user when multiple devices are present
 - [x] Capture both stdout and stderr from adb commands robustly
 - [x] Add timeout handling for all adb operations to prevent hangs
 - [x] Define and use structured error types for all adb failures

@@ -135,6 +135,67 @@ class ADBClient:
 
         return devices
 
+    def get_ready_devices(self) -> list[DeviceInfo]:
+        """
+        Get only ready (connected and authorized) devices.
+
+        Returns:
+            List of devices with state == DEVICE (connected and ready).
+        """
+        all_devices = self.list_devices()
+        return [d for d in all_devices if d.is_ready]
+
+    def validate_device(self, device_id: str) -> DeviceInfo:
+        """
+        Validate that a device exists and is ready.
+
+        Args:
+            device_id: The device ID to validate.
+
+        Returns:
+            DeviceInfo for the device if ready.
+
+        Raises:
+            ADBDeviceNotFoundError: If device not found or not ready.
+        """
+        devices = self.list_devices()
+        device = next((d for d in devices if d.device_id == device_id), None)
+        if device is None:
+            raise ADBDeviceNotFoundError(device_id)
+        if not device.is_ready:
+            raise ADBDeviceNotFoundError(device_id)
+        return device
+
+    def select_device(self, device_id: str | None = None) -> DeviceInfo:
+        """
+        Select a device, either explicitly or interactively if multiple are available.
+
+        Args:
+            device_id: Specific device ID to select. If None, auto-selects if only one
+                       ready device exists.
+
+        Returns:
+            The selected DeviceInfo.
+
+        Raises:
+            ADBDeviceNotFoundError: If device not found, not ready, or no devices available.
+        """
+        if device_id:
+            return self.validate_device(device_id)
+
+        # Auto-select if only one ready device
+        ready_devices = self.get_ready_devices()
+        if len(ready_devices) == 0:
+            raise ADBDeviceNotFoundError("No ready devices available")
+        if len(ready_devices) == 1:
+            return ready_devices[0]
+
+        # Multiple devices available - user needs to select
+        raise ADBDeviceNotFoundError(
+            f"Multiple devices available ({len(ready_devices)}). "
+            f"Please specify device ID: {', '.join(d.device_id for d in ready_devices)}"
+        )
+
     def get_device_info(self, device_id: str, force_refresh: bool = False) -> DeviceInfo:
         """
         Get complete device information including Android version.

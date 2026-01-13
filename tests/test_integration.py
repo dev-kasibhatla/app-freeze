@@ -190,3 +190,105 @@ class TestAppDiscoveryIntegration:
             app_info = client.get_app_info(device_id, package, fetch_size=True)
             print(f"\n{package} size: {app_info.size_mb} MB")
             assert app_info.size_mb >= 0.0
+
+
+class TestDeviceSelectionIntegration:
+    """Integration tests for device selection with real devices."""
+
+    @pytest.fixture
+    def client(self) -> ADBClient:
+        return ADBClient()
+
+    def test_get_ready_devices_multiple(self, client: ADBClient) -> None:
+        """Verify multiple devices are available and ready."""
+        ready = client.get_ready_devices()
+        print(f"\nReady devices: {len(ready)}")
+        for d in ready:
+            print(f"  - {d.device_id}: {d.display_name}")
+
+        assert len(ready) >= 2, "Expected at least 2 ready devices"
+
+    def test_validate_device_success(self, client: ADBClient) -> None:
+        """Validate first device."""
+        ready = client.get_ready_devices()
+        if not ready:
+            pytest.skip("No ready devices")
+
+        device_id = ready[0].device_id
+        device = client.validate_device(device_id)
+        print(f"\nValidated device: {device.display_name} ({device.device_id})")
+        assert device.device_id == device_id
+        assert device.is_ready
+
+    def test_validate_all_devices(self, client: ADBClient) -> None:
+        """Validate all connected ready devices."""
+        ready = client.get_ready_devices()
+        print(f"\nValidating {len(ready)} devices...")
+
+        for device in ready:
+            validated = client.validate_device(device.device_id)
+            assert validated.device_id == device.device_id
+            assert validated.is_ready
+            print(f"  ✓ {validated.display_name}")
+
+    def test_select_device_explicit_first(self, client: ADBClient) -> None:
+        """Select first device explicitly."""
+        ready = client.get_ready_devices()
+        if not ready:
+            pytest.skip("No ready devices")
+
+        device_id = ready[0].device_id
+        selected = client.select_device(device_id)
+        print(f"\nSelected: {selected.display_name}")
+        assert selected.device_id == device_id
+
+    def test_select_device_explicit_second(self, client: ADBClient) -> None:
+        """Select second device explicitly if available."""
+        ready = client.get_ready_devices()
+        if len(ready) < 2:
+            pytest.skip("Need at least 2 devices")
+
+        device_id = ready[1].device_id
+        selected = client.select_device(device_id)
+        print(f"\nSelected second device: {selected.display_name}")
+        assert selected.device_id == device_id
+
+    def test_select_device_auto_fails_with_multiple(self, client: ADBClient) -> None:
+        """Auto-selection should fail when multiple devices are present."""
+        ready = client.get_ready_devices()
+        if len(ready) < 2:
+            pytest.skip("Need at least 2 devices to test multiple selection failure")
+
+        with pytest.raises(ADBDeviceNotFoundError) as exc_info:
+            client.select_device()
+
+        error_msg = str(exc_info.value)
+        assert "Multiple devices available" in error_msg
+        print(f"\nCorrectly raised error: {error_msg}")
+
+    def test_device_independence(self, client: ADBClient) -> None:
+        """Verify different devices can be queried independently."""
+        ready = client.get_ready_devices()
+        if len(ready) < 2:
+            pytest.skip("Need at least 2 devices")
+
+        device1_id = ready[0].device_id
+        device2_id = ready[1].device_id
+
+        # Get info for both
+        info1 = client.get_device_info(device1_id)
+        info2 = client.get_device_info(device2_id)
+
+        print(f"\nDevice 1: {info1.display_name} (SDK {info1.sdk_level})")
+        print(f"Device 2: {info2.display_name} (SDK {info2.sdk_level})")
+
+        assert info1.device_id == device1_id
+        assert info2.device_id == device2_id
+
+        # Should be able to query different info for each
+        users1 = client.list_users(device1_id)
+        users2 = client.list_users(device2_id)
+        print(f"Device 1 users: {users1}")
+        print(f"Device 2 users: {users2}")
+        assert len(users1) >= 1
+        assert len(users2) >= 1
