@@ -2,9 +2,11 @@
 
 from app_freeze.adb.errors import (
     ADBCommandError,
+    ADBDeviceDisconnectedError,
     ADBDeviceNotFoundError,
     ADBError,
     ADBNotFoundError,
+    ADBPermissionError,
     ADBTimeoutError,
 )
 
@@ -81,4 +83,40 @@ class TestADBDeviceNotFoundError:
 
     def test_inheritance(self) -> None:
         err = ADBDeviceNotFoundError("device")
+        assert isinstance(err, ADBError)
+
+
+class TestADBDeviceDisconnectedError:
+    """Tests for ADBDeviceDisconnectedError."""
+
+    def test_attributes(self) -> None:
+        err = ADBDeviceDisconnectedError("ABC123")
+        assert err.device_id == "ABC123"
+        assert "ABC123" in err.message
+        assert "disconnected" in err.message.lower()
+        assert "reconnect" in err.message.lower()
+
+    def test_inheritance(self) -> None:
+        err = ADBDeviceDisconnectedError("device")
+        assert isinstance(err, ADBError)
+
+
+class TestADBPermissionError:
+    """Tests for ADBPermissionError."""
+
+    def test_attributes(self) -> None:
+        err = ADBPermissionError("pm disable", "TEST123")
+        assert err.operation == "pm disable"
+        assert err.device_id == "TEST123"
+        assert "permission" in err.message.lower()
+        assert "TEST123" in err.message
+        assert "pm disable" in err.message
+
+    def test_contains_guidance(self) -> None:
+        err = ADBPermissionError("shell", "device")
+        assert "USB debugging" in err.message
+        assert "Developer Options" in err.message or "authorization" in err.message.lower()
+
+    def test_inheritance(self) -> None:
+        err = ADBPermissionError("op", "dev")
         assert isinstance(err, ADBError)

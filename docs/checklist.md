@@ -40,61 +40,62 @@
 - [x] Sort app list alphabetically for display
 
 ## UI Core
-- [ ] Build the main page layout for app selection and actions
-- [ ] Build the device page layout for device info and selection
-- [ ] Implement visually distinct bordered sections for clarity
-- [ ] Implement headers and footers for navigation and status
-- [ ] Ensure responsive resizing for various terminal sizes
-- [ ] Implement a consistent and accessible color theme
+- [x] Build the main page layout for app selection and actions
+- [x] Build the device page layout for device info and selection
+- [x] Implement visually distinct bordered sections for clarity
+- [x] Implement headers and footers for navigation and status
+- [x] Ensure responsive resizing for various terminal sizes
+- [x] Implement a consistent and accessible color theme
 
 ## Input Handling
-- [ ] Implement keyboard navigation for all UI elements
-- [ ] Support spacebar to toggle app selection
-- [ ] Use Enter for confirmation actions
-- [ ] Use 'q' for navigation backward/exit
-- [ ] Use '?' to show a help overlay with keybindings
-- [ ] Support Tab and Shift+Tab for focus switching
-- [ ] (Optional) Add mouse support for selection and navigation
+- [x] Implement keyboard navigation for all UI elements
+- [x] Support spacebar to toggle app selection
+- [x] Use Enter for confirmation actions
+- [x] Use 'q' for navigation backward/exit
+- [x] Use '?' to show a help overlay with keybindings
+- [x] Support Tab and Shift+Tab for focus switching
+- [x] (Optional) Add mouse support for selection and navigation
 
 ## Confirmation Dialog
-- [ ] Display selected apps in two columns for easy review
-- [ ] Clearly show whether the action is enable or disable
-- [ ] Require explicit user confirmation before proceeding
-- [ ] Allow user to cancel and return to previous screen
+- [x] Display selected apps in two columns for easy review
+- [x] Clearly show whether the action is enable or disable
+- [x] Require explicit user confirmation before proceeding
+- [x] Allow user to cancel and return to previous screen
 
 ## Execution Engine
-- [ ] Enumerate all users on the device for multi-user support
-- [ ] Execute enable/disable actions per user as needed
-- [ ] Execute actions per app sequentially, not in parallel
-- [ ] Stream execution results live to the UI
-- [ ] Capture both success and failure for each operation
-- [ ] Never abort the process on a single failure; continue for all apps
+- [x] Enumerate all users on the device for multi-user support
+- [x] Execute enable/disable actions per user as needed
+- [x] Execute actions per app sequentially, not in parallel
+- [x] Stream execution results live to the UI
+- [x] Capture both success and failure for each operation
+- [x] Never abort the process on a single failure; continue for all apps
 
 ## Progress Display
-- [ ] Show a progress bar for app operations
-- [ ] Update progress bar and status per completed app
-- [ ] Show a live status line with current operation
-- [ ] Color code success and failure for clarity
+- [x] Show a progress bar for app operations
+- [x] Update progress bar and status per completed app
+- [x] Show a live status line with current operation
+- [x] Color code success and failure for clarity
 
 ## Summary Screen
-- [ ] Hide progress bar after completion
-- [ ] Show total number of apps processed
-- [ ] Show count of successful operations
-- [ ] Show count of failed operations
-- [ ] Allow user to return to main navigation
+- [x] Hide progress bar after completion
+- [x] Show total number of apps processed
+- [x] Show count of successful operations
+- [x] Show count of failed operations
+- [x] Allow user to return to main navigation
 
 ## Reporting
-- [ ] Create a `reports` directory for output
-- [ ] Generate report filenames using device ID and timestamp for uniqueness
-- [ ] Write a `report.md` with operation details
-- [ ] Include device metadata in the report
-- [ ] Include app list with status (success/failure)
-- [ ] Include operation timestamps
-- [ ] Ensure deterministic formatting for all reports
+- [x] Create a `reports` directory for output
+- [x] Generate report filenames using device ID and timestamp for uniqueness
+- [x] Write a `report.md` with operation details
+- [x] Include device metadata in the report
+- [x] Include app list with status (success/failure)
+- [x] Include operation timestamps
+- [x] Ensure deterministic formatting for all reports
 
 ## Testing
 - [x] Write unit tests for adb wrapper module
 - [x] Write unit tests for all parsing logic
+- [x] Write unit tests for reporting module
 - [ ] Write unit tests for state transitions
 - [ ] Write snapshot tests for UI components
 - [x] Write integration tests with mocked adb
@@ -102,10 +103,10 @@
 - [x] Test failure scenarios (adb errors, permission errors, etc)
 
 ## Reliability
-- [ ] Handle adb disconnects gracefully and inform the user
-- [ ] Handle permission errors gracefully and provide guidance
-- [ ] Ensure no terminal corruption on crash or error
-- [ ] Always cleanup and restore terminal state on exit
+- [x] Handle adb disconnects gracefully and inform the user
+- [x] Handle permission errors gracefully and provide guidance
+- [x] Ensure no terminal corruption on crash or error
+- [x] Always cleanup and restore terminal state on exit
 
 ## Packaging
 - [ ] Configure PyInstaller spec to use uv as the Python environment

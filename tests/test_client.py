@@ -7,8 +7,10 @@ import pytest
 from app_freeze.adb.client import ADBClient
 from app_freeze.adb.errors import (
     ADBCommandError,
+    ADBDeviceDisconnectedError,
     ADBDeviceNotFoundError,
     ADBNotFoundError,
+    ADBPermissionError,
     ADBTimeoutError,
 )
 from app_freeze.adb.models import DeviceState
@@ -90,6 +92,7 @@ class TestADBClientRun:
             assert "error message" in exc_info.value.stderr
 
     def test_device_not_found_error(self, client: ADBClient) -> None:
+        """Test that device disconnected error is raised for specific device."""
         mock_result = MagicMock()
         mock_result.returncode = 1
         mock_result.stdout = ""
@@ -97,9 +100,25 @@ class TestADBClientRun:
 
         with (
             patch("subprocess.run", return_value=mock_result),
-            pytest.raises(ADBDeviceNotFoundError),
+            pytest.raises(ADBDeviceDisconnectedError),
         ):
             client._run(["shell", "pm"], device_id="missing-device")
+
+    def test_permission_error(self, client: ADBClient) -> None:
+        """Test that permission error is raised for permission denied."""
+        mock_result = MagicMock()
+        mock_result.returncode = 1
+        mock_result.stdout = ""
+        mock_result.stderr = "error: permission denied"
+
+        with (
+            patch("subprocess.run", return_value=mock_result),
+            pytest.raises(ADBPermissionError) as exc_info,
+        ):
+            client._run(["shell", "pm", "disable"], device_id="test-device")
+
+        assert "test-device" in str(exc_info.value)
+        assert "permission" in str(exc_info.value).lower()
 
 
 class TestADBClientListDevices:

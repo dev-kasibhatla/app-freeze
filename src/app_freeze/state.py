@@ -1,7 +1,11 @@
 """Application state models."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app_freeze.adb.models import AppInfo, DeviceInfo
 
 
 class Screen(Enum):
@@ -22,47 +26,14 @@ class AppAction(Enum):
 
 
 @dataclass
-class Device:
-    """Android device information."""
-
-    device_id: str
-    model: str
-    manufacturer: str
-    android_version: str
-    sdk_level: int
-
-
-@dataclass
-class App:
-    """Android app information."""
-
-    package_name: str
-    name: str
-    enabled: bool
-    is_system: bool
-    size_mb: float
-
-
-@dataclass
 class AppState:
     """Overall application state."""
 
-    current_screen: Screen
-    selected_device: Device | None
-    available_devices: list[Device]
-    apps: list[App]
-    selected_apps: set[str]  # Package names
-    current_action: AppAction | None
-    execution_results: dict[str, bool]  # package_name -> success
-    error_message: str | None
-
-    def __init__(self) -> None:
-        """Initialize application state."""
-        self.current_screen = Screen.DEVICE_SELECTION
-        self.selected_device = None
-        self.available_devices = []
-        self.apps = []
-        self.selected_apps = set()
-        self.current_action = None
-        self.execution_results = {}
-        self.error_message = None
+    current_screen: Screen = field(default=Screen.DEVICE_SELECTION)
+    selected_device: "DeviceInfo | None" = field(default=None)
+    available_devices: list["DeviceInfo"] = field(default_factory=list)
+    apps: list["AppInfo"] = field(default_factory=list)
+    selected_apps: set[str] = field(default_factory=set)  # Package names
+    current_action: AppAction | None = field(default=None)
+    execution_results: dict[str, bool] = field(default_factory=dict)  # package_name -> success
+    error_message: str | None = field(default=None)

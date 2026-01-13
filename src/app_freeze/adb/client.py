@@ -6,8 +6,10 @@ from typing import Final
 
 from app_freeze.adb.errors import (
     ADBCommandError,
+    ADBDeviceDisconnectedError,
     ADBDeviceNotFoundError,
     ADBNotFoundError,
+    ADBPermissionError,
     ADBTimeoutError,
 )
 from app_freeze.adb.models import AppInfo, DeviceCache, DeviceInfo
@@ -93,11 +95,23 @@ class ADBClient:
             raise ADBTimeoutError(cmd_str, timeout) from e
 
         if result.returncode != 0:
-            # Check for device not found error
-            if "device" in result.stderr.lower() and (
-                "not found" in result.stderr.lower() or "offline" in result.stderr.lower()
+            stderr_lower = result.stderr.lower()
+
+            # Check for device disconnected/not found error
+            if "device" in stderr_lower and (
+                "not found" in stderr_lower
+                or "offline" in stderr_lower
+                or "disconnected" in stderr_lower
             ):
+                if device_id:
+                    raise ADBDeviceDisconnectedError(device_id)
                 raise ADBDeviceNotFoundError(device_id or "unknown")
+
+            # Check for permission errors
+            if "permission denied" in stderr_lower or "insufficient permissions" in stderr_lower:
+                operation = " ".join(args[:2]) if len(args) >= 2 else " ".join(args)
+                raise ADBPermissionError(operation, device_id or "unknown")
+
             raise ADBCommandError(cmd_str, result.returncode, result.stderr)
 
         return result.stdout, result.stderr
@@ -432,3 +446,117 @@ class ADBClient:
             return parse_du_output(size_stdout)
         except (ADBCommandError, ADBTimeoutError):
             return 0.0
+
+    def disable_app(
+        self,
+        device_id: str,
+        package_name: str,
+        user_id: int = 0,
+    ) -> tuple[bool, str | None]:
+        """
+        Disable an app for a specific user.
+
+        Args:
+            device_id: Target device ID.
+            package_name: Package name to disable.
+            user_id: User ID for the operation.
+
+        Returns:
+            Tuple of (success, error_message).
+        """
+        try:
+            stdout, stderr = self._run(
+                ["shell", "pm", "disable-user", "--user", str(user_id), package_name],
+                device_id=device_id,
+                timeout=10.0,
+            )
+            # Check for success indicators
+            output = stdout + stderr
+            if "disabled" in output.lower() or "new state" in output.lower():
+                return True, None
+            if "error" in output.lower() or "exception" in output.lower():
+                return False, output.strip()
+            # Assume success if no error
+            return True, None
+        except ADBCommandError as e:
+            return False, str(e)
+        except ADBTimeoutError as e:
+            return False, str(e)
+
+    def enable_app(
+        self,
+        device_id: str,
+        package_name: str,
+        user_id: int = 0,
+    ) -> tuple[bool, str | None]:
+        """
+        Enable an app for a specific user.
+
+        Args:
+            device_id: Target device ID.
+            package_name: Package name to enable.
+            user_id: User ID for the operation.
+
+        Returns:
+            Tuple of (success, error_message).
+        """
+        try:
+            stdout, stderr = self._run(
+                ["shell", "pm", "enable", "--user", str(user_id), package_name],
+                device_id=device_id,
+                timeout=10.0,
+            )
+            # Check for success indicators
+            output = stdout + stderr
+            if "enabled" in output.lower() or "new state" in output.lower():
+                return True, None
+            if "error" in output.lower() or "exception" in output.lower():
+                return False, output.strip()
+            # Assume success if no error
+            return True, None
+        except ADBCommandError as e:
+            return False, str(e)
+        except ADBTimeoutError as e:
+            return False, str(e)
+
+    def enable_disable_apps(
+        self,
+        device_id: str,
+        packages: list[str],
+        enable: bool,
+        user_ids: list[int] | None = None,
+    ) -> dict[str, tuple[bool, str | None]]:
+        """
+        Enable or disable multiple apps for all users.
+
+        Args:
+            device_id: Target device ID.
+            packages: List of package names.
+            enable: True to enable, False to disable.
+            user_ids: List of user IDs (fetches from device if None).
+
+        Returns:
+            Dict mapping package_name to (success, error_message).
+        """
+        if user_ids is None:
+            user_ids = self.list_users(device_id)
+            if not user_ids:
+                user_ids = [0]
+
+        results: dict[str, tuple[bool, str | None]] = {}
+        action = self.enable_app if enable else self.disable_app
+
+        for package in packages:
+            # Execute for all users, track overall success
+            all_success = True
+            last_error: str | None = None
+
+            for user_id in user_ids:
+                success, error = action(device_id, package, user_id)
+                if not success:
+                    all_success = False
+                    last_error = error
+
+            results[package] = (all_success, last_error)
+
+        return results

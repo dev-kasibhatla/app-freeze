@@ -45,3 +45,31 @@ class ADBDeviceNotFoundError(ADBError):
     def __init__(self, device_id: str) -> None:
         self.device_id = device_id
         super().__init__(f"Device not found or disconnected: {device_id}")
+
+
+class ADBDeviceDisconnectedError(ADBError):
+    """Device was disconnected during operation."""
+
+    def __init__(self, device_id: str) -> None:
+        self.device_id = device_id
+        super().__init__(
+            f"Device disconnected during operation: {device_id}\n"
+            "Please reconnect the device and try again."
+        )
+
+
+class ADBPermissionError(ADBError):
+    """Permission denied when executing operation."""
+
+    def __init__(self, operation: str, device_id: str) -> None:
+        self.operation = operation
+        self.device_id = device_id
+        super().__init__(
+            f"Permission denied for {operation} on device {device_id}\n"
+            "Possible solutions:\n"
+            "1. Enable USB debugging on your device\n"
+            "2. Accept the USB debugging authorization prompt\n"
+            "3. For some operations, you may need to enable "
+            "'USB debugging (Security settings)' in Developer Options\n"
+            "4. Try running: adb kill-server && adb start-server"
+        )
