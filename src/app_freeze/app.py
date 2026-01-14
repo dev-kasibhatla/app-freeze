@@ -176,26 +176,28 @@ def render_header(state: UIState) -> StyleAndText:
     """Render header bar with stylish title."""
     if state.view == ViewState.LOADING:
         return [
-            ("class:header", " "),
-            ("class:header.device", "⚡"),
-            ("class:header", " App Freeze — Loading..."),
+            ("class:header", "⚡ App Freeze"),
+            ("class:header", "\n"),
+            ("class:header.device", "Loading..."),
         ]
     if state.view == ViewState.DEVICE_SELECT:
         return [
-            ("class:header", " "),
-            ("class:header.device", "📱"),
-            ("class:header", " App Freeze — Select Device"),
+            ("class:header", "📱 Select Device"),
+            ("class:header", "\n"),
+            ("class:header.device", "Choose a connected Android device"),
         ]
     if state.selected_device:
         dev = state.selected_device
         name = dev.display_name or dev.device_id
         return [
-            ("class:header", " "),
-            ("class:header.device", "⚡ App Freeze"),
-            ("class:header", " on "),
-            ("class:header.device", name),
+            ("class:header", "⚡ App Freeze"),
+            ("class:header", "\n"),
+            ("class:header.device", f"on {name}"),
         ]
-    return [("class:header", " ⚡ App Freeze")]
+    return [
+        ("class:header", "⚡ App Freeze"),
+        ("class:header", "\n"),
+    ]
 
 
 def render_device_info(state: UIState) -> StyleAndText:
