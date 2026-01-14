@@ -39,7 +39,7 @@ StyleAndText = list[tuple[str, str]]
 STYLE = Style.from_dict(
     {
         "header": "bg:#1e1e2e #cdd6f4 bold",
-        "header.device": "#a6e3a1",
+        "header.device": "#a6e3a1 bold",
         "device-info": "bg:#313244 #cdd6f4",
         "device-info.label": "#89b4fa",
         "device-info.value": "#cdd6f4 bold",
@@ -172,19 +172,29 @@ class UIState:
 
 
 def render_header(state: UIState) -> StyleAndText:
-    """Render header bar."""
+    """Render header bar with stylish title."""
     if state.view == ViewState.LOADING:
-        return [("class:header", " App Freeze — Loading...")]
+        return [
+            ("class:header", " "),
+            ("class:header.device", "⚡"),
+            ("class:header", " App Freeze — Loading..."),
+        ]
     if state.view == ViewState.DEVICE_SELECT:
-        return [("class:header", " App Freeze — Select Device")]
+        return [
+            ("class:header", " "),
+            ("class:header.device", "📱"),
+            ("class:header", " App Freeze — Select Device"),
+        ]
     if state.selected_device:
         dev = state.selected_device
         name = dev.display_name or dev.device_id
         return [
-            ("class:header", " App Freeze — "),
-            ("class:header.device", f"{name}"),
+            ("class:header", " "),
+            ("class:header.device", "⚡ App Freeze"),
+            ("class:header", " on "),
+            ("class:header.device", name),
         ]
-    return [("class:header", " App Freeze")]
+    return [("class:header", " ⚡ App Freeze")]
 
 
 def render_device_info(state: UIState) -> StyleAndText:
@@ -714,10 +724,10 @@ class AppFreezeUI:
 
         return HSplit(
             [
-                # Header
+                # Header - slightly taller for better visual hierarchy
                 Window(
                     FormattedTextControl(lambda: render_header(self.state)),
-                    height=1,
+                    height=2,
                     style="class:header",
                 ),
                 # Device info bar
