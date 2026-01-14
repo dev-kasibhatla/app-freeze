@@ -295,8 +295,10 @@ def render_app_list(state: UIState, height: int = 20) -> StyleAndText:
         result.append(("", "\n  No apps match filter.\n"))
         return result
 
-    # Adaptive visible window - use available height minus header/footer
-    visible = max(5, height - 8)
+    # Adaptive visible window - account for all UI elements:
+    # header(2) + device(1) + tabs(1) + summary(1) + filter_header(2) +
+    # footer(1) + loading(1) = 9 lines
+    visible = max(5, height - 9)
     start = max(0, state.app_cursor - visible // 2)
     end = min(len(filtered), start + visible)
     start = max(0, end - visible)
@@ -329,8 +331,9 @@ def render_app_list(state: UIState, height: int = 20) -> StyleAndText:
         # Size
         size_str = f"{app.size_mb:>6.1f}MB" if app.size_mb > 0 else "      -"
 
-        # Package name - truncate to fit
-        pkg_name = app.package_name[:50].ljust(50)
+        # App name and package name
+        app_name = app.display_name[:25].ljust(25)  # Display name from package
+        pkg_name = app.package_name[:45]  # Package name
 
         # Row style
         if is_cursor:
@@ -343,7 +346,9 @@ def render_app_list(state: UIState, height: int = 20) -> StyleAndText:
         result.append((row_style, f" {prefix} "))
         result.append((state_style, state_char))
         result.append((sys_marker[1] if sys_marker[1] else row_style, sys_marker[0]))
-        result.append((row_style, f" {pkg_name} {size_str}\n"))
+        result.append((row_style, f" {app_name} "))
+        result.append(("class:summary", f"{pkg_name}"))
+        result.append((row_style, f" {size_str}\n"))
 
     remaining = len(filtered) - end
     if remaining > 0:
@@ -530,7 +535,12 @@ class AppFreezeUI:
     def _on_filter_changed(self, buf: Buffer) -> None:
         """Update filter text from buffer."""
         self.state.filter_text = buf.text
-        self.state.app_cursor = 0
+        # Clamp cursor to valid range after filter change
+        filtered = self.state.filtered_apps()
+        if filtered:
+            self.state.app_cursor = min(self.state.app_cursor, len(filtered) - 1)
+        else:
+            self.state.app_cursor = 0
 
     def _create_keybindings(self) -> KeyBindings:
         """Create all keybindings."""
@@ -941,13 +951,26 @@ class AppFreezeUI:
 
         import contextlib
 
+        # Show loading status while reloading
+        self.state.view = ViewState.LOADING
+        self.state.loading_status = "Reloading app list..."
+        self.app.invalidate()
+
+        def progress_callback(package: str, current: int, total: int) -> None:
+            """Update loading status with current package."""
+            self.state.loading_status = f"Reloading apps ({current}/{total})... {package}"
+            self.app.invalidate()
+
         with contextlib.suppress(ADBError):
             self.state.apps = self.adb.list_apps(
                 self.state.selected_device.device_id,
                 include_system=True,
                 include_user=True,
                 fetch_sizes=True,
+                progress_callback=progress_callback,
             )
+
+        self.state.loading_status = ""
 
     def _initialize_in_background(self) -> None:
         """Initialize ADB and load devices in background thread."""
