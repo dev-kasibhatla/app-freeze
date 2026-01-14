@@ -299,9 +299,18 @@ def render_app_list(state: UIState, height: int = 20) -> StyleAndText:
     # header(2) + device(1) + tabs(1) + summary(1) + filter_header(2) +
     # footer(1) + loading(1) = 9 lines
     visible = max(5, height - 9)
-    start = max(0, state.app_cursor - visible // 2)
-    end = min(len(filtered), start + visible)
-    start = max(0, end - visible)
+
+    # Keep cursor in view with some padding at bottom
+    padding = 7  # Empty lines to show when at end
+    if state.app_cursor >= len(filtered) - padding:
+        # Near end: show last items with padding
+        start = max(0, len(filtered) - visible + padding)
+        end = len(filtered)
+    else:
+        # Normal scrolling: center cursor
+        start = max(0, state.app_cursor - visible // 2)
+        end = min(len(filtered), start + visible)
+        start = max(0, end - visible)
 
     if start > 0:
         result.append(("class:summary", f" ↑ {start} more above\n"))
@@ -350,8 +359,12 @@ def render_app_list(state: UIState, height: int = 20) -> StyleAndText:
         result.append(("class:summary", f"{pkg_name}"))
         result.append((row_style, f" {size_str}\n"))
 
-    remaining = len(filtered) - end
-    if remaining > 0:
+    # Show empty lines at end to indicate list completion
+    if end >= len(filtered):
+        for _ in range(padding):
+            result.append(("", "\n"))
+    else:
+        remaining = len(filtered) - end
         result.append(("class:summary", f" ↓ {remaining} more below\n"))
 
     return result
@@ -945,32 +958,30 @@ class AppFreezeUI:
         self.report_writer.write_report(report)
 
     def _reload_apps(self) -> None:
-        """Reload app list after changes."""
+        """Update only the affected apps in the list instead of full reload."""
         if not self.adb or not self.state.selected_device:
             return
 
-        import contextlib
+        # Only update apps that were just modified
+        affected_packages = {pkg for pkg, _, _ in self.state.execution_results}
+        if not affected_packages:
+            return
 
-        # Show loading status while reloading
-        self.state.view = ViewState.LOADING
-        self.state.loading_status = "Reloading app list..."
-        self.app.invalidate()
-
-        def progress_callback(package: str, current: int, total: int) -> None:
-            """Update loading status with current package."""
-            self.state.loading_status = f"Reloading apps ({current}/{total})... {package}"
-            self.app.invalidate()
-
-        with contextlib.suppress(ADBError):
-            self.state.apps = self.adb.list_apps(
-                self.state.selected_device.device_id,
-                include_system=True,
-                include_user=True,
-                fetch_sizes=True,
-                progress_callback=progress_callback,
-            )
-
-        self.state.loading_status = ""
+        # Update apps in place
+        for i, app in enumerate(self.state.apps):
+            if app.package_name in affected_packages:
+                try:
+                    # Fetch updated info for this app
+                    updated_app = self.adb.get_app_info(
+                        self.state.selected_device.device_id,
+                        app.package_name,
+                        fetch_size=True,
+                    )
+                    # Replace in list
+                    self.state.apps[i] = updated_app
+                except ADBError:
+                    # Keep old data if update fails
+                    pass
 
     def _initialize_in_background(self) -> None:
         """Initialize ADB and load devices in background thread."""

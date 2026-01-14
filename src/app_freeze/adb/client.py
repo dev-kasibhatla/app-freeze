@@ -1,5 +1,6 @@
 """ADB client wrapper for all adb interactions."""
 
+import concurrent.futures
 import shutil
 import subprocess
 from collections.abc import Callable
@@ -405,16 +406,33 @@ class ADBClient:
         packages = self.list_packages(device_id, include_system, include_user)
         apps: list[AppInfo] = []
         total = len(packages)
+        completed = 0
 
-        for idx, package in enumerate(packages, 1):
-            if progress_callback:
-                progress_callback(package, idx, total)
+        def fetch_app(package: str) -> AppInfo | None:
+            """Fetch single app info, returns None on error."""
             try:
-                app_info = self.get_app_info(device_id, package, user_id, fetch_sizes)
-                apps.append(app_info)
+                return self.get_app_info(device_id, package, user_id, fetch_sizes)
             except (ADBCommandError, ADBTimeoutError):
-                # Skip apps that fail to query
-                continue
+                return None
+
+        # Use ThreadPoolExecutor for parallel fetching (max 8 workers)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+            # Submit all tasks
+            future_to_pkg = {executor.submit(fetch_app, pkg): pkg for pkg in packages}
+
+            # Process as they complete
+            for future in concurrent.futures.as_completed(future_to_pkg):
+                completed += 1
+                pkg = future_to_pkg[future]
+                if progress_callback:
+                    progress_callback(pkg, completed, total)
+                try:
+                    app_info = future.result()
+                    if app_info:
+                        apps.append(app_info)
+                except Exception:
+                    # Skip apps that fail
+                    pass
 
         # Sort alphabetically by package name
         return sorted(apps, key=lambda a: a.package_name.lower())
