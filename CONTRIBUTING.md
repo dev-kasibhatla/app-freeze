@@ -19,8 +19,8 @@ Be respectful, collaborative, and constructive. We're all here to make this proj
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/adb-dissable.git
-cd adb-dissable
+git clone https://github.com/yourusername/app-freeze.git
+cd app-freeze
 
 # Create virtual environment using uv
 uv venv
@@ -315,7 +315,7 @@ When updating documentation:
 ## Project Structure
 
 ```
-adb-dissable/
+app-freeze/
 ├── src/
 │   └── app_freeze/
 │       ├── __init__.py
