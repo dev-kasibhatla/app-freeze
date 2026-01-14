@@ -70,7 +70,10 @@ disallow_untyped_calls = true
 [[tool.mypy.overrides]]
 module = ["tests.*"]
 disallow_untyped_decorators = false
-
+[tool.pytest.ini_options]
+markers = [
+    "integration: marks tests as integration tests requiring hardware (deselect with '-m \"not integration\"')",
+]
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",

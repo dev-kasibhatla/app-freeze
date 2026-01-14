@@ -50,9 +50,9 @@ fi
 print_info "Cleaning previous builds..."
 rm -rf build/ dist/
 
-# Run tests first
+# Run tests first (excluding integration tests which require hardware)
 print_info "Running tests..."
-if ! uv run pytest; then
+if ! uv run pytest -m "not integration"; then
     print_error "Tests failed. Fix tests before building."
     exit 1
 fi

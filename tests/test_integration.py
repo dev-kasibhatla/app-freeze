@@ -15,6 +15,7 @@ def client() -> ADBClient:
     return ADBClient()
 
 
+@pytest.mark.integration
 class TestADBIntegration:
     """Integration tests requiring a real connected device."""
 
@@ -91,6 +92,7 @@ class TestADBIntegration:
         assert info3.device_id == device_id
 
 
+@pytest.mark.integration
 class TestAppDiscoveryIntegration:
     """Integration tests for app discovery with real devices."""
 
@@ -192,6 +194,7 @@ class TestAppDiscoveryIntegration:
             assert app_info.size_mb >= 0.0
 
 
+@pytest.mark.integration
 class TestDeviceSelectionIntegration:
     """Integration tests for device selection with real devices."""
 
