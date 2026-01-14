@@ -834,6 +834,9 @@ class AppFreezeUI:
         self.state.execution_total = len(packages)
         self.state.execution_progress = 0
 
+        # Show executing view immediately
+        self.app.invalidate()
+
         device_id = self.state.selected_device.device_id
         action = self.state.pending_action
 
