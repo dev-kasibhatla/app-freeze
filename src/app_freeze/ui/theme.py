@@ -16,7 +16,8 @@ COLORS = {
     "accent": "#be4bdb",  # Accent for highlights
 }
 
-# CSS variables for the app theme
+# Comprehensive CSS with theme variables and widget styles
+# All CSS is consolidated here to ensure variables are available when PyInstaller packages the app
 THEME_CSS = """
 $primary: #5c7cfa;
 $secondary: #748ffc;
@@ -99,5 +100,119 @@ ProgressBar > .bar--complete {
 
 ProgressBar > .bar--indeterminate {
     color: $primary;
+}
+
+/* AppItem styles */
+AppItem {
+    height: 3;
+    padding: 0 1;
+}
+
+AppItem > Horizontal {
+    height: 100%;
+    align: left middle;
+}
+
+AppItem > Horizontal > .app-checkbox {
+    width: 4;
+}
+
+AppItem > Horizontal > .app-name {
+    width: 1fr;
+    padding-left: 1;
+}
+
+AppItem > Horizontal > .app-status {
+    width: 12;
+    text-align: center;
+}
+
+AppItem > Horizontal > .app-size {
+    width: 10;
+    text-align: right;
+}
+
+AppItem > Horizontal > .app-type {
+    width: 8;
+    text-align: center;
+    color: $text-muted;
+}
+
+AppItem.--selected {
+    background: $primary 30%;
+}
+
+AppItem:hover {
+    background: $surface-light;
+}
+
+AppItem.--highlight {
+    background: $accent 20%;
+}
+
+.status-enabled {
+    color: $success;
+}
+
+.status-disabled {
+    color: $error;
+}
+
+/* AppListWidget styles */
+AppListWidget {
+    height: 1fr;
+    border: solid $border;
+    border-title-color: $primary;
+}
+
+AppListWidget > .app-list-header {
+    height: 2;
+    background: $surface-light;
+    padding: 0 1;
+}
+
+AppListWidget:focus {
+    border: double $accent;
+}
+
+/* DeviceInfoPanel styles */
+DeviceInfoPanel {
+    height: auto;
+    padding: 1 2;
+    border: solid $border;
+    border-title-color: $primary;
+}
+
+DeviceInfoPanel > Vertical > Horizontal {
+    height: 1;
+}
+
+DeviceInfoPanel > Vertical > Horizontal > .label {
+    width: 15;
+    color: $text-muted;
+}
+
+DeviceInfoPanel > Vertical > Horizontal > .value {
+    width: 1fr;
+}
+
+/* StatusBar styles */
+StatusBar {
+    height: 1;
+    background: $surface-light;
+    padding: 0 2;
+}
+
+StatusBar > Horizontal {
+    height: 1;
+}
+
+StatusBar .status-text {
+    width: 1fr;
+}
+
+StatusBar .status-count {
+    width: auto;
+    color: $text-muted;
 }
 """

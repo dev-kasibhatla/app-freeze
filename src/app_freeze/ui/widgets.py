@@ -14,63 +14,6 @@ class AppItem(ListItem):
 
     COMPONENT_CLASSES = {"app-item--system", "app-item--disabled", "app-item--selected"}
 
-    DEFAULT_CSS = """
-    AppItem {
-        height: 3;
-        padding: 0 1;
-    }
-
-    AppItem > Horizontal {
-        height: 100%;
-        align: left middle;
-    }
-
-    AppItem > Horizontal > .app-checkbox {
-        width: 4;
-    }
-
-    AppItem > Horizontal > .app-name {
-        width: 1fr;
-        padding-left: 1;
-    }
-
-    AppItem > Horizontal > .app-status {
-        width: 12;
-        text-align: center;
-    }
-
-    AppItem > Horizontal > .app-size {
-        width: 10;
-        text-align: right;
-    }
-
-    AppItem > Horizontal > .app-type {
-        width: 8;
-        text-align: center;
-        color: $text-muted;
-    }
-
-    AppItem.--selected {
-        background: $primary 30%;
-    }
-
-    AppItem:hover {
-        background: $surface-light;
-    }
-
-    AppItem.--highlight {
-        background: $accent 20%;
-    }
-
-    .status-enabled {
-        color: $success;
-    }
-
-    .status-disabled {
-        color: $error;
-    }
-    """
-
     class Toggled(Message):
         """Emitted when the app selection is toggled."""
 
@@ -103,8 +46,13 @@ class AppItem(ListItem):
     def watch_selected(self, selected: bool) -> None:
         """React to selection changes."""
         self.set_class(selected, "--selected")
-        checkbox = self.query_one(Checkbox)
-        checkbox.value = selected
+        # Only update checkbox if widget is mounted and composed
+        try:
+            checkbox = self.query_one(Checkbox)
+            checkbox.value = selected
+        except Exception:
+            # Widget not yet composed, checkbox will be created with correct value
+            pass
 
     def toggle(self) -> None:
         """Toggle selection state."""
@@ -121,24 +69,6 @@ class AppItem(ListItem):
 
 class AppListWidget(ListView):
     """Scrollable list of apps with selection support."""
-
-    DEFAULT_CSS = """
-    AppListWidget {
-        height: 1fr;
-        border: solid $border;
-        border-title-color: $primary;
-    }
-
-    AppListWidget > .app-list-header {
-        height: 2;
-        background: $surface-light;
-        padding: 0 1;
-    }
-
-    AppListWidget:focus {
-        border: double $accent;
-    }
-    """
 
     class SelectionChanged(Message):
         """Emitted when the selection set changes."""
@@ -212,28 +142,6 @@ class AppListWidget(ListView):
 class DeviceInfoPanel(Static):
     """Panel displaying device information."""
 
-    DEFAULT_CSS = """
-    DeviceInfoPanel {
-        height: auto;
-        padding: 1 2;
-        border: solid $border;
-        border-title-color: $primary;
-    }
-
-    DeviceInfoPanel > Vertical > Horizontal {
-        height: 1;
-    }
-
-    DeviceInfoPanel > Vertical > Horizontal > .label {
-        width: 15;
-        color: $text-muted;
-    }
-
-    DeviceInfoPanel > Vertical > Horizontal > .value {
-        width: 1fr;
-    }
-    """
-
     def __init__(
         self,
         device_id: str = "",
@@ -273,27 +181,6 @@ class DeviceInfoPanel(Static):
 
 class StatusBar(Static):
     """Status bar showing current operation status."""
-
-    DEFAULT_CSS = """
-    StatusBar {
-        height: 1;
-        background: $surface-light;
-        padding: 0 2;
-    }
-
-    StatusBar > Horizontal {
-        height: 1;
-    }
-
-    StatusBar .status-text {
-        width: 1fr;
-    }
-
-    StatusBar .status-count {
-        width: auto;
-        color: $text-muted;
-    }
-    """
 
     def __init__(
         self,

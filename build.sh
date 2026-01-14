@@ -93,6 +93,21 @@ if [ -f "dist/app-freeze" ]; then
         print_warn "Binary test had issues, but may still work"
     fi
     
+    # Test for CSS errors
+    print_info "Checking for CSS errors..."
+    css_test_output=$(timeout 1s dist/app-freeze 2>&1 || true)
+    if echo "$css_test_output" | grep -i "error in stylesheet" > /dev/null; then
+        print_error "CSS errors detected in binary!"
+        echo "$css_test_output"
+        exit 1
+    elif echo "$css_test_output" | grep -i "undefined variable" > /dev/null; then
+        print_error "Undefined CSS variables detected in binary!"
+        echo "$css_test_output"
+        exit 1
+    else
+        print_info "No CSS errors found!"
+    fi
+    
     print_info ""
     print_info "Build complete! To run:"
     print_info "  ./dist/app-freeze"
