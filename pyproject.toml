@@ -1,6 +1,6 @@
 [project]
 name = "app-freeze"
-version = "0.1.0"
+version = "0.1.1"
 description = "A modern TUI tool to manage Android app states via ADB"
 readme = "README.md"
 requires-python = ">=3.11"

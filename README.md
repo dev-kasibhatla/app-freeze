@@ -45,8 +45,8 @@ chmod +x app-freeze
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/adb-dissable.git
-cd adb-dissable
+git clone https://github.com/yourusername/app-freeze.git
+cd app-freeze
 
 # Install using uv (recommended)
 uv venv
@@ -239,8 +239,8 @@ MIT License - see [LICENSE](LICENSE) file for details
 ## Support
 
 - 📖 [Full Documentation](docs/)
-- 🐛 [Report Issues](https://github.com/yourusername/adb-dissable/issues)
-- 💡 [Feature Requests](https://github.com/yourusername/adb-dissable/issues)
+- 🐛 [Report Issues](https://github.com/yourusername/app-freeze/issues)
+- 💡 [Feature Requests](https://github.com/yourusername/app-freeze/issues)
 5. Commit your changes (`git commit -m 'feat: add amazing feature'`)
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
