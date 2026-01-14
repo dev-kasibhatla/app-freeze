@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum, auto
@@ -108,6 +109,7 @@ class UIState:
 
     view: ViewState = ViewState.LOADING
     error_msg: str = ""
+    loading_status: str = ""  # Status message during loading
 
     # Device selection
     devices: list[DeviceInfo] = field(default_factory=list)
@@ -698,7 +700,9 @@ class AppFreezeUI:
         @kb.add("y")
         def confirm_yes(event: KeyPressEvent) -> None:
             if self.state.view == ViewState.CONFIRM:
-                self._execute_action()
+                # Run action in background thread to keep UI responsive
+                action_thread = threading.Thread(target=self._execute_action, daemon=True)
+                action_thread.start()
 
         return kb
 
@@ -768,6 +772,12 @@ class AppFreezeUI:
                     height=1,
                     style="class:footer",
                 ),
+                # Loading status - only shown during loading
+                Window(
+                    FormattedTextControl(self._get_loading_status),
+                    height=1,
+                    style="class:progress",
+                ),
             ]
         )
 
@@ -792,6 +802,12 @@ class AppFreezeUI:
         if self.state.view not in (ViewState.APP_LIST,):
             return []
         return render_summary(self.state)
+
+    def _get_loading_status(self) -> StyleAndText:
+        """Get loading status message."""
+        if self.state.view != ViewState.LOADING or not self.state.loading_status:
+            return []
+        return [("class:progress", f" ⏳ {self.state.loading_status}")]
 
     def _get_content(self) -> StyleAndText:
         """Generate main content based on current view."""
@@ -828,16 +844,29 @@ class AppFreezeUI:
         """Handle device selection and load apps."""
         self.state.selected_device = device
         self.state.view = ViewState.LOADING
+        self.state.loading_status = f"Connecting to {device.display_name or device.device_id}..."
         self.app.invalidate()
 
         try:
             if self.adb:
+
+                def progress_callback(package: str, current: int, total: int) -> None:
+                    """Update loading status with current package."""
+                    self.state.loading_status = (
+                        f"Fetching app details ({current}/{total})... {package}"
+                    )
+                    self.app.invalidate()
+
                 self.state.apps = self.adb.list_apps(
                     device.device_id,
                     include_system=True,
                     include_user=True,
                     fetch_sizes=True,
+                    progress_callback=progress_callback,
                 )
+
+                self.state.loading_status = f"Loaded {len(self.state.apps)} apps"
+                self.app.invalidate()
                 self.state.view = ViewState.APP_LIST
         except ADBError as e:
             self.state.error_msg = str(e)
@@ -920,15 +949,22 @@ class AppFreezeUI:
                 fetch_sizes=True,
             )
 
-    def run(self) -> None:
-        """Run the application."""
+    def _initialize_in_background(self) -> None:
+        """Initialize ADB and load devices in background thread."""
         try:
+            self.state.loading_status = "Initializing ADB..."
+            self.app.invalidate()
             self.adb = ADBClient()
+
+            self.state.loading_status = "Scanning for devices..."
+            self.app.invalidate()
             devices = self.adb.get_ready_devices()
 
             # Get detailed device info
             detailed: list[DeviceInfo] = []
-            for dev in devices:
+            for i, dev in enumerate(devices, 1):
+                self.state.loading_status = f"Getting device info ({i}/{len(devices)})..."
+                self.app.invalidate()
                 try:
                     detailed.append(self.adb.get_device_info(dev.device_id))
                 except Exception:
@@ -939,18 +975,30 @@ class AppFreezeUI:
             if len(detailed) == 1:
                 self._select_device(detailed[0])
             elif detailed:
+                self.state.loading_status = ""
                 self.state.view = ViewState.DEVICE_SELECT
+                self.app.invalidate()
             else:
                 self.state.error_msg = "No devices connected"
                 self.state.view = ViewState.ERROR
+                self.app.invalidate()
 
         except ADBNotFoundError:
             self.state.error_msg = "ADB not found. Install Android SDK and add to PATH."
             self.state.view = ViewState.ERROR
+            self.app.invalidate()
         except ADBError as e:
             self.state.error_msg = str(e)
             self.state.view = ViewState.ERROR
+            self.app.invalidate()
 
+    def run(self) -> None:
+        """Run the application."""
+        # Start background initialization
+        init_thread = threading.Thread(target=self._initialize_in_background, daemon=True)
+        init_thread.start()
+
+        # Run the UI (this blocks until exit)
         self.app.run()
 
 

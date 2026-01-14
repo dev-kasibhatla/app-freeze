@@ -2,6 +2,7 @@
 
 import shutil
 import subprocess
+from collections.abc import Callable
 from typing import Final
 
 from app_freeze.adb.errors import (
@@ -383,6 +384,7 @@ class ADBClient:
         include_system: bool = True,
         include_user: bool = True,
         fetch_sizes: bool = False,
+        progress_callback: Callable[[str, int, int], None] | None = None,
     ) -> list[AppInfo]:
         """
         List all apps on the device with detailed information.
@@ -393,14 +395,18 @@ class ADBClient:
             include_system: Include system apps.
             include_user: Include third-party apps.
             fetch_sizes: If True, fetch app sizes (much slower).
+            progress_callback: Optional callback(package_name, current, total) for progress.
 
         Returns:
             Sorted list of app information.
         """
         packages = self.list_packages(device_id, include_system, include_user)
         apps: list[AppInfo] = []
+        total = len(packages)
 
-        for package in packages:
+        for idx, package in enumerate(packages, 1):
+            if progress_callback:
+                progress_callback(package, idx, total)
             try:
                 app_info = self.get_app_info(device_id, package, user_id, fetch_sizes)
                 apps.append(app_info)
