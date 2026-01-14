@@ -1,11 +1,11 @@
 [project]
 name = "app-freeze"
-version = "0.1.1"
-description = "A modern TUI tool to manage Android app states via ADB"
+version = "0.2.0"
+description = "A fast, lazygit-style TUI tool to manage Android app states via ADB"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "textual>=0.47.0",
+    "prompt_toolkit>=3.0.0",
 ]
 
 license = { text = "GPL-3.0-or-later" }
@@ -70,6 +70,11 @@ disallow_untyped_calls = true
 [[tool.mypy.overrides]]
 module = ["tests.*"]
 disallow_untyped_decorators = false
+
+[[tool.mypy.overrides]]
+module = ["app_freeze.app"]
+disallow_untyped_decorators = false
+
 [tool.pytest.ini_options]
 markers = [
     "integration: marks tests as integration tests requiring hardware (deselect with '-m \"not integration\"')",

@@ -37,14 +37,25 @@ Reasoning:
 - Simple cross platform builds
 
 TUI Framework
-- Textual (preferred)
-- Rich for rendering and colors
+- prompt_toolkit (primary)
+- Rich for formatted output
 
 Reasons:
-- Native keyboard and mouse support
-- Layouts, borders, headers, footers built in
-- Event driven architecture
-- Clean separation of state and UI
+- Instant startup (no async initialization overhead)
+- Synchronous event loop - simpler mental model
+- First-class keyboard navigation (Vi/Emacs modes)
+- Lightweight and fast like lazygit
+- Built-in completion, search, and filtering
+- Full-screen layouts with HSplit/VSplit
+- Works perfectly with PyInstaller
+
+Design Goals (lazygit-inspired):
+- Sub-100ms startup time
+- Compact single-screen layout with panels
+- All actions accessible via single keystrokes
+- Real-time filtering/search with '/'
+- No modal dialogs - inline confirmations
+- Status bar shows current context and keybindings
 
 ADB Interaction
 - subprocess.run with explicit timeout
@@ -106,35 +117,45 @@ Key Principles
 
 ## Screen Flow
 
-Main Screen
-- Detect adb
-- Detect devices
-- Show connection status
-- If multiple devices exist, show selector
+Single-Screen Layout (lazygit-style):
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ App Freeze - Device: Pixel 7 (abc123)                    [?]Help│
+├─────────────────────────────────────────────────────────────────┤
+│ Filter: _____________                        [d]isabled [e]nabled│
+├─────────────────────────────────────────────────────────────────┤
+│   Package Name                           Size    State   Action │
+│ ─────────────────────────────────────────────────────────────── │
+│ > com.facebook.katana                   150MB   enabled   [ ]   │
+│   com.instagram.android                 120MB   enabled   [ ]   │
+│   com.whatsapp                           80MB   enabled   [x]   │
+│   com.twitter.android                    90MB  disabled   [ ]   │
+│                                                                 │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤
+│ 1 selected │ [space]toggle [a]ll [n]one [D]isable [E]nable [q]uit│
+└─────────────────────────────────────────────────────────────────┘
+```
 
-Device Screen
-- Fetch and display device metadata
-- Fetch and display installed apps
-- Show enabled or disabled state
-- Show app size in MB
-- Scrollable, searchable list
-- Keyboard and mouse selection
+Keybindings:
+- j/k or ↑/↓: Navigate list
+- space: Toggle selection
+- a: Select all visible
+- n: Deselect all
+- /: Focus filter input
+- d: Show only disabled apps
+- e: Show only enabled apps
+- D: Disable selected apps (with inline confirm)
+- E: Enable selected apps (with inline confirm)
+- y: Confirm action
+- q: Quit / cancel
+- ?: Show help
 
-Confirm Screen
-- Two column app list
-- Clear action label (Enable or Disable)
-- Explicit confirmation required
-
-Execution Screen
-- Progress bar
-- Live per app status
-- Color coded results
-- No blocking UI
-
-Summary
-- Totals
-- Failures
-- Return navigation
+Inline Confirmation:
+- When D or E pressed, status bar changes to:
+  "Disable 3 apps? [y]es [n]o"
+- No modal dialog - stays in same view
+- Shows affected apps highlighted
 
 ## Example ADB Commands Used
 
