@@ -29,20 +29,17 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        # Include any data files from textual if needed
-        *collect_data_files('textual'),
+        # Include any data files from prompt_toolkit if needed
+        *collect_data_files('prompt_toolkit'),
     ],
     hiddenimports=[
-        # Textual dependencies
-        'textual',
-        'rich',
-        'markdown_it',
-        'pygments',
+        # prompt_toolkit dependencies
+        'prompt_toolkit',
+        'wcwidth',
         
         # Our modules
         'app_freeze',
         'app_freeze.adb',
-        'app_freeze.ui',
         *collect_submodules('app_freeze'),
     ],
     hookspath=[],
