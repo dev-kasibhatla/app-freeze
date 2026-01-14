@@ -1,0 +1,129 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            artifact_name: app-freeze-Linux-x86_64
+            binary_path: dist/app-freeze
+          - os: macos-latest
+            artifact_name: app-freeze-Darwin-x86_64
+            binary_path: dist/app-freeze
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: |
+          uv sync --all-extras
+
+      - name: Run tests
+        run: |
+          uv run pytest -m "not integration" --tb=short
+
+      - name: Run linting
+        run: |
+          uv run ruff check src/ || true
+
+      - name: Run type checking
+        run: |
+          uv run mypy src/ || true
+
+      - name: Build with PyInstaller
+        run: |
+          uv run pyinstaller app-freeze.spec
+
+      - name: Verify binary
+        run: |
+          test -f ${{ matrix.binary_path }}
+          chmod +x ${{ matrix.binary_path }}
+          ls -lh ${{ matrix.binary_path }}
+
+      - name: Create tarball
+        run: |
+          cd dist
+          tar -czf ${{ matrix.artifact_name }}.tar.gz app-freeze
+          cd ..
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: dist/${{ matrix.artifact_name }}.tar.gz
+          retention-days: 5
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure
+        run: ls -R artifacts
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release v${{ steps.version.outputs.VERSION }}
+          body: |
+            # App Freeze v${{ steps.version.outputs.VERSION }}
+            
+            ## Installation
+            
+            Download the appropriate binary for your system:
+            - **Linux**: `app-freeze-Linux-x86_64.tar.gz`
+            - **macOS**: `app-freeze-Darwin-x86_64.tar.gz`
+            
+            Extract and run:
+            ```bash
+            tar -xzf app-freeze-*.tar.gz
+            chmod +x app-freeze
+            ./app-freeze
+            ```
+            
+            ## Requirements
+            - ADB (Android Debug Bridge) must be installed and in PATH
+            - Android device connected via USB with USB debugging enabled
+            
+            ## What's Changed
+            See commit history for details.
+          files: |
+            artifacts/app-freeze-Linux-x86_64/app-freeze-Linux-x86_64.tar.gz
+            artifacts/app-freeze-Darwin-x86_64/app-freeze-Darwin-x86_64.tar.gz
+          draft: false
+          prerelease: false
+          generate_release_notes: true
