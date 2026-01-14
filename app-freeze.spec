@@ -18,7 +18,7 @@ IS_LINUX = sys.platform.startswith('linux')
 
 # Application metadata
 APP_NAME = 'app-freeze'
-APP_VERSION = '1.0.0'
+APP_VERSION = '0.0.1'
 
 # Main script
 MAIN_SCRIPT = 'src/app_freeze/main.py'
