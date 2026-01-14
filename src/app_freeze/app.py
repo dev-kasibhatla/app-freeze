@@ -127,6 +127,7 @@ class UIState:
     # Execution results
     execution_progress: int = 0
     execution_total: int = 0
+    execution_current: str = ""  # Current package being processed
     execution_results: list[tuple[str, bool, str | None]] = field(default_factory=list)
 
     def filtered_apps(self) -> list[AppInfo]:
@@ -384,10 +385,17 @@ def render_execution(state: UIState) -> StyleAndText:
     bar = "█" * filled + "░" * (bar_width - filled)
 
     result.append(("class:progress", f"  {action} apps...\n\n"))
-    result.append(("class:progress", f"  [{bar}] {progress}/{total}\n\n"))
+    result.append(("class:progress", f"  [{bar}] {progress}/{total}\n"))
+
+    # Current package being processed
+    if state.execution_current:
+        result.append(("class:filter.label", "\n  ⚡ Processing: "))
+        result.append(("class:progress", f"{state.execution_current}\n"))
+
+    result.append(("", "\n"))
 
     # Recent results
-    for pkg, success, error in state.execution_results[-8:]:
+    for pkg, success, error in state.execution_results[-6:]:
         if success:
             result.append(("class:success", f"  ✓ {pkg}\n"))
         else:
@@ -843,6 +851,7 @@ class AppFreezeUI:
         packages = list(self.state.selected_packages)
         self.state.execution_total = len(packages)
         self.state.execution_progress = 0
+        self.state.execution_current = ""
 
         # Show executing view immediately
         self.app.invalidate()
@@ -851,6 +860,10 @@ class AppFreezeUI:
         action = self.state.pending_action
 
         for pkg in packages:
+            # Set current package and show it before processing
+            self.state.execution_current = pkg
+            self.app.invalidate()
+
             try:
                 if action == AppAction.DISABLE:
                     success, msg = self.adb.disable_app(device_id, pkg)

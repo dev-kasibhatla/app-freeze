@@ -482,7 +482,9 @@ class TestEdgeCases:
             ("pkg1", True, None),
             ("pkg2", False, "Some error"),
         ]
+        state.execution_current = "pkg2"
         assert len(state.execution_results) == 2
+        assert state.execution_current == "pkg2"
         assert state.execution_results[0][1] is True
         assert state.execution_results[1][2] == "Some error"
 
