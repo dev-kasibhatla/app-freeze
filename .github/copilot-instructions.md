@@ -1,6 +1,6 @@
 # Copilot Instructions
 
-Language: Python (using uv package manager)
+Language: Python (using uv package manager with env managed by uv .venv)
 
 General Rules
 - Do not be verbose

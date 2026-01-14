@@ -175,7 +175,7 @@ class AppFreezeApp(App[None]):
                     """Handle device selection result."""
                     if device:
                         self.call_later(self._on_device_selected, device)
-                
+
                 self.push_screen(DeviceScreen(detailed_devices), on_device_screen_result)
         except ADBDeviceDisconnectedError as e:
             self._show_error("Device Disconnected", str(e))
@@ -225,16 +225,18 @@ class AppFreezeApp(App[None]):
             # Remove loading
             self._hide_loading()
 
-            # Show app list screen
-            result = await self.push_screen_wait(AppListScreen(self._current_device, self._apps))
+            # Show app list screen with callback
+            def on_app_list_result(result: tuple[set[str], AppAction] | None) -> None:
+                """Handle app list screen result."""
+                if result is None:
+                    # User went back - show device selection again
+                    self.call_later(self._show_device_selection)
+                else:
+                    # User selected apps and action
+                    selected_packages, action = result
+                    self.call_later(self._confirm_action, selected_packages, action)
 
-            if result is None:
-                # User went back - show device selection again
-                await self._show_device_selection()
-            else:
-                # User selected apps and action
-                selected_packages, action = result
-                await self._confirm_action(selected_packages, action)
+            self.push_screen(AppListScreen(self._current_device, self._apps), on_app_list_result)
 
         except ADBDeviceDisconnectedError as e:
             self._hide_loading()
@@ -270,13 +272,16 @@ class AppFreezeApp(App[None]):
 
     async def _confirm_action(self, packages: set[str], action: AppAction) -> None:
         """Show confirmation dialog and execute if confirmed."""
-        confirmed = await self.push_screen_wait(ConfirmationScreen(packages, action))
 
-        if confirmed:
-            await self._execute_action(list(packages), action)
-        else:
-            # Go back to app list
-            await self._load_and_show_apps()
+        def on_confirm_result(confirmed: bool | None) -> None:
+            """Handle confirmation result."""
+            if confirmed:
+                self.call_later(self._execute_action, list(packages), action)
+            else:
+                # Go back to app list
+                self.call_later(self._load_and_show_apps)
+
+        self.push_screen(ConfirmationScreen(packages, action), on_confirm_result)
 
     async def _execute_action(self, packages: list[str], action: AppAction) -> None:
         """Execute enable/disable action on packages."""
@@ -289,77 +294,85 @@ class AppFreezeApp(App[None]):
 
         # Show execution screen
         exec_screen = ExecutionScreen(packages, action)
-        self.push_screen(exec_screen)
 
         operation_results: list[OperationResult] = []
 
-        try:
-            # Get user IDs
-            user_ids = await self._run_blocking(lambda: adb.list_users(device_id))
-            if not user_ids:
-                user_ids = [0]
+        async def run_execution() -> None:
+            """Run the execution in a worker context."""
+            try:
+                # Get user IDs
+                user_ids = await self._run_blocking(lambda: adb.list_users(device_id))
+                if not user_ids:
+                    user_ids = [0]
 
-            # Execute actions sequentially
-            enable = action == AppAction.ENABLE
+                # Execute actions sequentially
+                enable = action == AppAction.ENABLE
 
-            for i, package in enumerate(packages):
-                exec_screen.update_progress(i, package)
+                for i, package in enumerate(packages):
+                    exec_screen.update_progress(i, package)
 
-                # Run action in thread - capture package in default arg
-                def run_action(pkg: str = package) -> dict[str, tuple[bool, str | None]]:
-                    return adb.enable_disable_apps(device_id, [pkg], enable, user_ids)
+                    # Run action in thread - capture package in default arg
+                    def run_action(pkg: str = package) -> dict[str, tuple[bool, str | None]]:
+                        return adb.enable_disable_apps(device_id, [pkg], enable, user_ids)
 
+                    try:
+                        result = await self._run_blocking(run_action)
+                        success, error = result.get(package, (False, "Unknown error"))
+                        exec_screen.add_result(package, success, error)
+                        operation_results.append(OperationResult(package, success, error))
+                    except ADBDeviceDisconnectedError as e:
+                        # Device disconnected - show error and stop execution
+                        exec_screen.add_result(package, False, str(e))
+                        operation_results.append(OperationResult(package, False, str(e)))
+                        self._show_error("Device Disconnected", str(e))
+                        break
+                    except ADBPermissionError as e:
+                        # Permission error - log but continue
+                        exec_screen.add_result(package, False, str(e))
+                        operation_results.append(OperationResult(package, False, str(e)))
+                    except ADBError as e:
+                        # Other ADB error - log but continue
+                        exec_screen.add_result(package, False, str(e))
+                        operation_results.append(OperationResult(package, False, str(e)))
+
+                # Update final progress
+                exec_screen.update_progress(len(packages), "Complete")
+                exec_screen.show_complete()
+
+            except Exception as e:
+                # Unexpected error - show and return
+                self._show_error("Execution Error", str(e))
+                return
+
+        def on_execution_complete(results: dict[str, bool] | None) -> None:
+            """Handle execution screen dismissal."""
+            # Store results in state
+            if results:
+                self.state.execution_results = results
+            else:
+                self.state.execution_results = {}
+
+            # Generate report
+            async def write_report() -> None:
                 try:
-                    result = await self._run_blocking(run_action)
-                    success, error = result.get(package, (False, "Unknown error"))
-                    exec_screen.add_result(package, success, error)
-                    operation_results.append(OperationResult(package, success, error))
-                except ADBDeviceDisconnectedError as e:
-                    # Device disconnected - show error and stop execution
-                    exec_screen.add_result(package, False, str(e))
-                    operation_results.append(OperationResult(package, False, str(e)))
-                    self._show_error("Device Disconnected", str(e))
-                    break
-                except ADBPermissionError as e:
-                    # Permission error - log but continue
-                    exec_screen.add_result(package, False, str(e))
-                    operation_results.append(OperationResult(package, False, str(e)))
-                except ADBError as e:
-                    # Other ADB error - log but continue
-                    exec_screen.add_result(package, False, str(e))
-                    operation_results.append(OperationResult(package, False, str(e)))
+                    report = OperationReport(
+                        device=device,
+                        action=action,
+                        timestamp=datetime.now(),
+                        results=operation_results,
+                    )
+                    await self._run_blocking(lambda: self._report_writer.write_report(report))
+                except Exception:
+                    # Don't fail if report writing fails
+                    pass
+                # Return to app list
+                await self._load_and_show_apps()
 
-            # Update final progress
-            exec_screen.update_progress(len(packages), "Complete")
-            exec_screen.show_complete()
+            self.call_later(write_report)
 
-        except Exception as e:
-            # Unexpected error - show and return
-            self._show_error("Execution Error", str(e))
-            return
-
-        # Wait for user to dismiss
-        results = await self.push_screen_wait(exec_screen)
-
-        # Store results in state
-        self.state.execution_results = dict((results or {}).items())
-
-        # Generate report
-        try:
-            report = OperationReport(
-                device=device,
-                action=action,
-                timestamp=datetime.now(),
-                results=operation_results,
-            )
-            await self._run_blocking(lambda: self._report_writer.write_report(report))
-            # Could show notification about report location, but keep UI clean for now
-        except Exception:
-            # Don't fail if report writing fails
-            pass
-
-        # Return to app list
-        await self._load_and_show_apps()
+        # Run execution as a worker, then push screen
+        self.run_worker(run_execution(), exclusive=True)
+        self.push_screen(exec_screen, on_execution_complete)
 
     async def action_quit(self) -> None:
         """Handle quit action."""
