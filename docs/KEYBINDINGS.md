@@ -6,98 +6,95 @@ Complete reference for all keyboard shortcuts in App Freeze.
 
 Available on all screens:
 
-| Key | Action | Description |
-|-----|--------|-------------|
-| `q` | Quit/Back | Exit application or return to previous screen |
-| `?` | Help | Show help overlay with keybindings |
-| `Ctrl+C` | Force Quit | Emergency exit (terminal restored) |
+| Key | Action |
+|-----|--------|
+| `q` | Exit/Back - Quit app or return to previous screen |
+| `Ctrl+C` | Force Quit - Emergency exit |
 
 ## Device Selection Screen
 
-| Key | Action | Description |
-|-----|--------|-------------|
-| `↑` / `k` | Move Up | Navigate to previous device |
-| `↓` / `j` | Move Down | Navigate to next device |
-| `Enter` | Select | Select the highlighted device |
-| `r` | Refresh | Re-scan for connected devices |
-| `q` | Quit | Exit application |
+Navigate and select your Android device:
+
+| Key | Action |
+|-----|--------|
+| `j` / `k` or `↑` / `↓` | Navigate devices |
+| `g` / `G` | Jump to top/bottom |
+| `enter` | Select device |
+| `q` | Quit |
 
 ## App List Screen
 
 ### Navigation
 
-| Key | Action | Description |
-|-----|--------|-------------|
-| `↑` / `k` | Move Up | Navigate to previous app |
-| `↓` / `j` | Move Down | Navigate to next app |
-| `Page Up` | Page Up | Jump up one page |
-| `Page Down` | Page Down | Jump down one page |
-| `Home` | Go to Top | Jump to first app |
-| `End` | Go to Bottom | Jump to last app |
-| `Tab` | Next Section | Switch to next UI section |
-| `Shift+Tab` | Previous Section | Switch to previous UI section |
+| Key | Action |
+|-----|--------|
+| `j` / `k` or `↑` / `↓` | Navigate apps |
+| `g` / `G` | Jump to top/bottom |
+
+### Tab Filters (View Control)
+
+Press to show only specific apps:
+
+| Key | Filter |
+|-----|--------|
+| `1` | All apps |
+| `2` | User apps only |
+| `3` | System apps only |
+| `4` | Enabled apps only |
+| `5` | Disabled apps only |
+
+### Search
+
+| Key | Action |
+|-----|--------|
+| `/` | Open search/filter by package name |
+| `escape` | Close search |
 
 ### Selection
 
-| Key | Action | Description |
-|-----|--------|-------------|
-| `Space` | Toggle | Toggle selection for highlighted app |
-| `Enter` | Toggle | Same as Space - toggle selection |
-| `a` | Select All | Select all visible apps |
-| `n` | Clear Selection | Deselect all apps |
-| `s` | Toggle System | Show/hide system apps |
+| Key | Action |
+|-----|--------|
+| `space` | Toggle selection for current app |
+| `a` | Select all visible apps |
+| `n` | Clear all selections |
 
 ### Actions
 
-| Key | Action | Description |
-|-----|--------|-------------|
-| `e` | Enable | Enable all selected apps (shows confirmation) |
-| `d` | Disable | Disable all selected apps (shows confirmation) |
-| `q` | Back | Return to device selection |
+| Key | Action |
+|-----|--------|
+| `D` | Disable selected apps (shows confirmation) |
+| `E` | Enable selected apps (shows confirmation) |
+| `q` | Back to device selection |
 
 ## Confirmation Screen
 
-| Key | Action | Description |
-|-----|--------|-------------|
-| `y` / `Enter` | Confirm | Proceed with the operation |
-| `n` / `Esc` | Cancel | Cancel operation and return |
-| `q` | Cancel | Same as 'n' - cancel and return |
+| Key | Action |
+|-----|--------|
+| `y` | Confirm action |
+| `q` / `n` | Cancel action |
 
 ## Execution Screen
 
-| Key | Action | Description |
-|-----|--------|-------------|
-| `Enter` | Continue | Dismiss screen when operation complete |
-| `q` | Continue | Same as Enter - dismiss when done |
+View real-time progress:
 
-Note: During execution, no input is accepted until operation completes.
+| Key | Action |
+|-----|--------|
+| (auto-advances) | Shows progress bar, current package, results |
 
-## Help Overlay
+## Result Log Screen
 
-| Key | Action | Description |
-|-----|--------|-------------|
-| `Esc` | Close | Close help overlay |
-| `q` | Close | Close help overlay |
-| `?` | Close | Toggle help overlay |
+View detailed results after action completes:
 
-## Mouse Support
+| Key | Action |
+|-----|--------|
+| `enter` / `q` | Return to app list |
 
-Mouse support is available (if your terminal supports it):
+## Tips
 
-| Action | Effect |
-|--------|--------|
-| Click | Select app or UI element |
-| Scroll | Navigate app list |
-| Double-click | Toggle app selection |
-
-## Terminal Compatibility
-
-### Recommended Terminals
-
-- **Linux**: GNOME Terminal, Konsole, Alacritty, kitty
-- **macOS**: Terminal.app, iTerm2, Alacritty, kitty
-- **SSH**: Works well over SSH with proper terminal emulation
-
+- **Vim-style navigation**: j/k for up/down, g/G for top/bottom
+- **Mouse support**: Works in most modern terminals
+- **Real-time feedback**: Press 'y' to confirm - see progress immediately
+- **Responsive**: All operations feel instant with smooth visual feedback
 ### Key Combinations
 
 Some terminals may interpret certain keys differently:

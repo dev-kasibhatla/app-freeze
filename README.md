@@ -12,14 +12,26 @@ This project is licensed under the terms of the GNU General Public License v3.0.
 
 ## Features
 
-- 🎯 **Interactive TUI** - Keyboard-driven interface built with Textual
+- ⚡ **Ultra-fast TUI** - Sub-300ms startup with prompt_toolkit
 - 📱 **Multi-device support** - Automatic detection and selection
-- 🔍 **App browser** - View all installed apps with metadata (size, state, type)
+- 🔍 **Smart app browser** - Search/filter by name, type, or state
+- 📊 **Tab-based filtering** - View All, User, System, Enabled, or Disabled apps
 - ✅ **Batch operations** - Enable/disable multiple apps at once
 - 👥 **Multi-user support** - Works across all Android users on device
+- 📋 **Real-time feedback** - Live progress with current package info
 - 📊 **Detailed reports** - Markdown reports saved automatically
-- 🛡️ **Safety first** - Explicit confirmations, no data loss
-- 🚀 **Fast & responsive** - Async operations, no UI blocking
+- 🛡️ **Safety first** - Explicit confirmations, inline verification
+- 🎯 **Keyboard-driven** - Vim-style navigation (j/k, space, /, etc.)
+
+### What's New (v0.3.0)
+
+- **Complete UI rewrite** with prompt_toolkit for lightning-fast startup
+- **Tab-based filtering** - Press [1-5] to filter by All/User/System/Enabled/Disabled
+- **Real-time progress** - See current package being processed during actions
+- **Device info widget** - Model, Android version, device ID at a glance
+- **Summary stats** - Total apps, system, user, enabled, disabled counts
+- **Result log** - Full details of each app's enable/disable result
+- **Better keybindings** - Vim-style (j/k), improved responsiveness
 
 ## Prerequisites
 
