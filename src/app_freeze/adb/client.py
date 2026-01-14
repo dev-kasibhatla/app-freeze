@@ -354,7 +354,7 @@ class ADBClient:
         # Determine if it's a system app
         is_system = self._is_system_app(device_id, package_name)
 
-        # Get enabled state and version code via dumpsys
+        # Get enabled state, version code, and app label via dumpsys
         dumpsys_stdout, _ = self._run(
             ["shell", "dumpsys", "package", package_name],
             device_id=device_id,
@@ -363,6 +363,7 @@ class ADBClient:
         metadata = parse_dumpsys_package(dumpsys_stdout, user_id)
         is_enabled = bool(metadata.get("enabled", True))
         version_code = int(metadata.get("version_code", 0))
+        app_label = str(metadata.get("app_label", ""))
 
         # Optionally get app size
         size_mb = 0.0
@@ -375,6 +376,7 @@ class ADBClient:
             is_enabled=is_enabled,
             size_mb=size_mb,
             version_code=version_code,
+            app_label=app_label,
         )
 
     def list_apps(

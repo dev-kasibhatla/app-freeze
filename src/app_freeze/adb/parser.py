@@ -100,16 +100,20 @@ def parse_package_path(output: str) -> str | None:
 def parse_dumpsys_package(output: str, user_id: int = 0) -> dict[str, str | int | bool]:
     """
     Parse 'dumpsys package <package>' output for app details.
-    Returns dict with enabled state and other metadata.
+    Returns dict with enabled state, app label, and other metadata.
     """
     result: dict[str, str | int | bool] = {
         "enabled": True,  # Default to enabled
         "version_code": 0,
+        "app_label": "",
     }
 
     # Look for user-specific state (e.g., "User 0: ... enabled=0")
     user_pattern = re.compile(rf"User {user_id}:.*?enabled=(\d+)")
     version_pattern = re.compile(r"versionCode=(\d+)")
+    # App label can appear as: applicationInfo=... labelRes=... nonLocalizedLabel=...
+    # or in ApplicationInfo section
+    label_pattern = re.compile(r"(?:nonLocalizedLabel|labelRes)=([^\s]+)")
 
     for line in output.splitlines():
         # Check for enabled state
@@ -123,6 +127,14 @@ def parse_dumpsys_package(output: str, user_id: int = 0) -> dict[str, str | int 
         version_match = version_pattern.search(line)
         if version_match:
             result["version_code"] = int(version_match.group(1))
+
+        # Check for app label
+        label_match = label_pattern.search(line)
+        if label_match and not result["app_label"]:
+            label = label_match.group(1).strip()
+            # Remove quotes and resource IDs
+            if label and not label.startswith("0x"):
+                result["app_label"] = label.strip('"')
 
     return result
 

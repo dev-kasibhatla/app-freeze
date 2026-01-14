@@ -53,11 +53,15 @@ class AppInfo:
     is_enabled: bool
     size_mb: float = 0.0
     version_code: int = 0
+    app_label: str = ""  # Actual app name from Android manifest
 
     @property
     def display_name(self) -> str:
-        """Human-readable app name from package."""
-        # Extract readable name from package (e.g., com.android.chrome -> Chrome)
+        """Human-readable app name."""
+        # Use actual app label if available, otherwise derive from package
+        if self.app_label:
+            return self.app_label
+        # Fallback: extract from package (e.g., com.android.chrome -> Chrome)
         parts = self.package_name.split(".")
         return parts[-1].replace("_", " ").title()
 
