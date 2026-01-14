@@ -19,7 +19,7 @@ Be respectful, collaborative, and constructive. We're all here to make this proj
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/app-freeze.git
+git clone https://github.com/dev-kasibhatla/app-freeze.git
 cd app-freeze
 
 # Create virtual environment using uv
@@ -39,7 +39,7 @@ pre-commit install
 
 1. Create a new branch from `main`:
    ```bash
-   git checkout -b feature/your-feature-name
+   git checkout -b feat/your-feature-name
    ```
 
 2. Ensure tests pass:
